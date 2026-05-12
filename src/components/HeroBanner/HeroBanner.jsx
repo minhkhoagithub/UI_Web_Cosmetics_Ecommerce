@@ -22,16 +22,17 @@ const HeroBanner = () => {
                 <motion.h2 className="font-display text-4xl md:text-6xl lg:text-7xl text-primary-foreground font-semibold mb-6">
                     Redefine Your Style
                 </motion.h2>
-                <motion.button
+                <motion.a
                 initial={{opacity: 0, y: 20}}
                 animate={{opacity:1 , y: 0}}
                 transition={{delay: 0.6}}
                 whileHover={{scale: 1.05}}
                 whileTap={{scale: 0.95}}
+                href="#product"
                 className='bg-primary-foreground text-primary font-body text-sm tracking-widest uppercase px-10 py-4 hover:bg-accent hover:text-accent-foreground transition-colors duration-300 cursor-pointer'
                 >
                     Explore Now
-                </motion.button>
+                </motion.a>
             </div>
         </section>
     );
