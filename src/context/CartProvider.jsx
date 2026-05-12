@@ -1,74 +1,158 @@
-import { createContext, useCallback, useContext, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { useAuth } from './AuthProvider'
 
+const CartContext = createContext(null)
 
-const CartContext = createContext(null);
+const CART_STORAGE_PREFIX = 'cosmetics-shop.cart'
+
+const getCartStorageKey = (userId) => `${CART_STORAGE_PREFIX}.${userId || 'guest'}`
+
+const readStoredCart = (userId) => {
+  if (typeof window === 'undefined') {
+    return []
+  }
+
+  try {
+    const rawValue = window.localStorage.getItem(getCartStorageKey(userId))
+    if (!rawValue) {
+      return []
+    }
+
+    const parsedValue = JSON.parse(rawValue)
+    return Array.isArray(parsedValue) ? parsedValue : []
+  } catch {
+    return []
+  }
+}
 
 const CartProvider = ({ children }) => {
-    const [isCartOpen, setIsCartOpen] = useState(false); // initial value = false;
-    const [isCheckoutOpen, setIsCheckoutOpen] = useState(false); // initial value = false;
-    const [isSearchOpen, setIsSearchOpen] = useState(false); // initial value = false
-    const [items, setItems] = useState([]);
-    const [searchQuery, setSearchQuery] = useState(""); // initial value = empty string;
+  const { user } = useAuth()
+  const [isCartOpen, setIsCartOpen] = useState(false)
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [items, setItems] = useState([])
+  const [searchQuery, setSearchQuery] = useState('')
 
+  useEffect(() => {
+    setItems(readStoredCart(user?.userId))
+  }, [user?.userId])
 
-    const addToCart = useCallback((product, quantity, size, color) => {
-        setItems((prev) => {
-            const existing = prev.find((i) => i.product.id === product.id);
-            if (existing) {
-                return prev.map((i) =>
-                    i.product.id === product.id ? { ...i, quantity: i.quantity + quantity } : i
-                );
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    window.localStorage.setItem(getCartStorageKey(user?.userId), JSON.stringify(items))
+  }, [items, user?.userId])
+
+  const addToCart = useCallback((product, variant, quantity) => {
+    setItems((previousItems) => {
+      const existingItem = previousItems.find((item) => item.variantId === variant.id)
+
+      if (existingItem) {
+        return previousItems.map((item) =>
+          item.variantId === variant.id
+            ? {
+                ...item,
+                quantity: item.quantity + quantity,
+                stockQuantity: variant.stockQuantity,
+                image: variant.image || product.image,
+                price: variant.price,
+              }
+            : item,
+        )
+      }
+
+      return [
+        ...previousItems,
+        {
+          id: variant.id,
+          productId: product.productId,
+          variantId: variant.id,
+          name: product.name,
+          category: product.category,
+          image: variant.image || product.image,
+          sku: variant.sku,
+          variantLabel: variant.label,
+          price: variant.price,
+          quantity,
+          stockQuantity: variant.stockQuantity,
+        },
+      ]
+    })
+
+    setIsCartOpen(true)
+  }, [])
+
+  const removeFromCart = useCallback((variantId) => {
+    setItems((previousItems) => previousItems.filter((item) => item.variantId !== variantId))
+  }, [])
+
+  const updateQuantity = useCallback((variantId, quantity) => {
+    if (quantity <= 0) {
+      setItems((previousItems) => previousItems.filter((item) => item.variantId !== variantId))
+      return
+    }
+
+    setItems((previousItems) =>
+      previousItems.map((item) =>
+        item.variantId === variantId
+          ? {
+              ...item,
+              quantity: Math.min(quantity, item.stockQuantity || quantity),
             }
-            return [...prev, { product, quantity: quantity, selectedSize: size, selectedColor: color }];
-        });
-        setIsCartOpen(true);
-    }, []);
-
-    const removeFromCart = useCallback((productId) => {
-        setItems((prev) => (
-            prev.filter(i => i.product.id !== productId)
-        ))
-    }, []);
-
-    const updateQuantity = useCallback((productId, quantity) => {
-        if (quantity <= 0) {
-            setItems((prev) => prev.filter(i => i.product.id !== productId));
-        }
-        setItems((prev) => (
-            prev.map(i => i.product.id === productId ? { ...i, quantity } : i)
-        ));
-    }, []);
-
-    const clearCart = useCallback(() => setItems([]), []);
-
-    const totalPrice = items?.reduce((sum, i) => sum + i.product.price * i.quantity, 0);
-
-    return (
-        <CartContext.Provider value={{
-            isCartOpen,
-            setIsCartOpen,
-            isCheckoutOpen,
-            setIsCheckoutOpen,
-            isSearchOpen,
-            setIsSearchOpen,
-            addToCart,
-            items,
-            removeFromCart,
-            updateQuantity,
-            clearCart,
-            totalPrice,
-            searchQuery,
-            setSearchQuery,
-        }}>
-            {children}
-        </CartContext.Provider>
+          : item,
+      ),
     )
-};
+  }, [])
 
-export default CartProvider;
+  const clearCart = useCallback(() => {
+    setItems([])
+  }, [])
+
+  const totalPrice = useMemo(
+    () => items.reduce((sum, item) => sum + Number(item.price ?? 0) * Number(item.quantity ?? 0), 0),
+    [items],
+  )
+
+  const totalItems = useMemo(
+    () => items.reduce((sum, item) => sum + Number(item.quantity ?? 0), 0),
+    [items],
+  )
+
+  return (
+    <CartContext.Provider
+      value={{
+        isCartOpen,
+        setIsCartOpen,
+        isCheckoutOpen,
+        setIsCheckoutOpen,
+        isSearchOpen,
+        setIsSearchOpen,
+        addToCart,
+        items,
+        removeFromCart,
+        updateQuantity,
+        clearCart,
+        totalPrice,
+        totalItems,
+        searchQuery,
+        setSearchQuery,
+      }}
+    >
+      {children}
+    </CartContext.Provider>
+  )
+}
+
+export default CartProvider
 
 export const useCart = () => {
-    const ctx = useContext(CartContext);
-    if (!ctx) throw new Error("useCart must me used within CartProvider");
-    return ctx;
+  const context = useContext(CartContext)
+
+  if (!context) {
+    throw new Error('useCart must be used within CartProvider')
+  }
+
+  return context
 }

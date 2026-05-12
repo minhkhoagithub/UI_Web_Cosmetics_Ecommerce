@@ -8,11 +8,11 @@ import Newsletter from '../../components/Newsletter/Newsletter';
 import CartSidebar from '../../components/CartSidebar/CartSidebar';
 import SearchOverlay from '../../components/SearchOverlay/SearchOverlay';
 import ProductDetailsModal from '../../components/ProductDetailsModal/ProductDetailsModal';
+import CheckoutDrawer from '../../components/CheckoutDrawer/CheckoutDrawer';
 
 
 const Index = () => {
     const [selectedProduct, setSelectedProduct] = useState(null); // initial value = null;
-    console.log(selectedProduct)
     return (
         <div className='bg-background'>
             <HeroBanner />
@@ -23,10 +23,6 @@ const Index = () => {
             {/* PRODUCT MODAL  */}
             {
                 selectedProduct && (
-                    // <ProductModal
-                    //     
-                    //     
-                    // />
                     <ProductDetailsModal
                         product={selectedProduct}
                         onClose={() => setSelectedProduct(null)}
@@ -38,6 +34,7 @@ const Index = () => {
             <Newsletter/>
 
             <CartSidebar/>
+            <CheckoutDrawer />
             <SearchOverlay onProductClick={setSelectedProduct} />
         </div>
     );

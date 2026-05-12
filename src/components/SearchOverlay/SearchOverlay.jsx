@@ -1,133 +1,194 @@
-import { AnimatePresence, motion } from "framer-motion";
-import { useCart } from "../../context/CartProvider";
-import { SearchIcon, X } from "lucide-react";
-import { useEffect, useRef } from "react";
-import { products } from "../../data/data";
-import { div } from "framer-motion/client";
+import { AnimatePresence, motion } from 'framer-motion'
+import { SearchIcon, X } from 'lucide-react'
+import { useDeferredValue, useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { useAuth } from '../../context/AuthProvider'
+import { useCart } from '../../context/CartProvider'
+import { getProductSuggestions, mapSearchItemToCard, searchProducts } from '../../services/catalog'
+import { formatCurrency } from '../../utils/format'
 
 const SearchOverlay = ({ onProductClick }) => {
-    const { isSearchOpen, setIsSearchOpen, searchQuery, setSearchQuery } = useCart();
-    const inputRef = useRef(null);
+  const { isAuthenticated } = useAuth()
+  const { isSearchOpen, setIsSearchOpen, searchQuery, setSearchQuery } = useCart()
+  const inputRef = useRef(null)
+  const deferredQuery = useDeferredValue(searchQuery)
+  const [suggestions, setSuggestions] = useState([])
+  const [results, setResults] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
 
-    useEffect(() => {
-        if (isSearchOpen) {
-            setTimeout(() => inputRef.current.focus(), 100);
-        } else {
-            setSearchQuery("");
+  useEffect(() => {
+    if (isSearchOpen) {
+      window.setTimeout(() => inputRef.current?.focus(), 100)
+    } else {
+      setSearchQuery('')
+      setSuggestions([])
+      setResults([])
+    }
+  }, [isSearchOpen, setSearchQuery])
+
+  useEffect(() => {
+    if (!isSearchOpen || !isAuthenticated) {
+      return
+    }
+
+    if (!deferredQuery.trim()) {
+      setSuggestions([])
+      setResults([])
+      return
+    }
+
+    let isSubscribed = true
+
+    const loadSearchData = async () => {
+      setIsLoading(true)
+
+      try {
+        const [suggestionResponse, searchResponse] = await Promise.all([
+          getProductSuggestions(deferredQuery.trim()),
+          searchProducts({ q: deferredQuery.trim(), size: 6 }),
+        ])
+
+        if (!isSubscribed) {
+          return
         }
 
-    }, [isSearchOpen, setSearchQuery]);
+        setSuggestions(suggestionResponse)
+        setResults(searchResponse.items.map((item) => mapSearchItemToCard(item)))
+      } catch {
+        if (isSubscribed) {
+          setSuggestions([])
+          setResults([])
+        }
+      } finally {
+        if (isSubscribed) {
+          setIsLoading(false)
+        }
+      }
+    }
 
-    const filtered = searchQuery.trim()
-        ? products.filter((p) =>
-            p.name.toLowerCase().includes(searchQuery.toLowerCase())
-            ||
-            p.category.toLowerCase().includes(searchQuery.toLowerCase())
-            ||
-            p.description.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-        : [];
-    return (
-        <AnimatePresence>
+    loadSearchData()
 
-            {
-                isSearchOpen && (
-                    <>
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className="overlay-backdrop"
-                            onClick={() => setIsSearchOpen(false)}
-                        />
-                        <motion.div
-                            initial={{ opacity: 0, y: -40 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -40 }}
-                            transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                            className="fixed top-0 left-0 right-0 z-50 bg-background shadow-2xl"
+    return () => {
+      isSubscribed = false
+    }
+  }, [deferredQuery, isAuthenticated, isSearchOpen])
+
+  return (
+    <AnimatePresence>
+      {isSearchOpen ? (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="overlay-backdrop"
+            onClick={() => setIsSearchOpen(false)}
+          />
+
+          <motion.div
+            initial={{ opacity: 0, y: -40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -40 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className="fixed left-0 right-0 top-0 z-50 bg-background shadow-2xl"
+          >
+            <div className="container mx-auto px-4 py-6">
+              <div className="mb-6 flex items-center gap-4">
+                <SearchIcon size={22} className="shrink-0 text-muted-foreground" />
+                <input
+                  ref={inputRef}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  value={searchQuery}
+                  type="text"
+                  placeholder="Tìm theo tên, dòng sản phẩm hoặc insight chăm sóc da..."
+                  className="flex-1 bg-transparent font-body text-lg text-foreground outline-none placeholder:text-muted-foreground"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setIsSearchOpen(false)}
+                  className="cursor-pointer rounded-full p-2 transition-colors hover:bg-muted"
+                >
+                  <X size={20} className="text-foreground" />
+                </button>
+              </div>
+
+              {!isAuthenticated ? (
+                <div className="rounded-[2rem] border border-border px-6 py-8 text-center">
+                  <p className="text-sm leading-7 text-muted-foreground">
+                    Tìm kiếm sản phẩm thật từ backend chỉ khả dụng sau khi đăng nhập.
+                  </p>
+                  <Link
+                    to="/login"
+                    onClick={() => setIsSearchOpen(false)}
+                    className="mt-5 inline-flex rounded-full bg-foreground px-5 py-3 text-sm font-semibold uppercase tracking-[0.22em] text-primary-foreground"
+                  >
+                    Đăng nhập
+                  </Link>
+                </div>
+              ) : searchQuery.trim() ? (
+                <div className="max-h-[60vh] overflow-auto border-t border-border pt-4">
+                  {suggestions.length > 0 ? (
+                    <div className="mb-4 flex flex-wrap gap-2">
+                      {suggestions.map((suggestion) => (
+                        <button
+                          key={`${suggestion.source}-${suggestion.text}`}
+                          type="button"
+                          onClick={() => setSearchQuery(suggestion.text)}
+                          className="rounded-full border border-border px-3 py-1 text-xs uppercase tracking-[0.18em] text-muted-foreground transition hover:border-foreground hover:text-foreground"
                         >
-                            <div className="container mx-auto px-4 py-6">
-                                <div className="flex items-center gap-4 mb-6">
-                                    <SearchIcon size={22} className="text-muted-foreground shrink-0" />
-                                    <input
-                                        ref={inputRef}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                        value={searchQuery}
-                                        type="text"
-                                        className="flex-1 bg-transparent text-foreground font-body text-lg outline-none placeholder:text-muted-foreground"
-                                    />
+                          {suggestion.text}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
 
-                                    <button
-                                        onClick={() => setIsSearchOpen(false)}
-                                        className="p-2 hover:bg-muted rounded-full transition-colors cursor-pointer">
-                                        <X size={20} className="text-foreground" />
-                                    </button>
-                                </div>
+                  {isLoading ? (
+                    <p className="py-8 text-center text-muted-foreground">Đang tìm sản phẩm phù hợp...</p>
+                  ) : results.length === 0 ? (
+                    <p className="py-8 text-center text-muted-foreground">Không tìm thấy sản phẩm phù hợp với "{searchQuery}"</p>
+                  ) : (
+                    <div className="space-y-3">
+                      <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                        {results.length} kết quả
+                      </p>
 
+                      {results.map((product) => (
+                        <motion.button
+                          key={product.productId}
+                          type="button"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="flex w-full items-center gap-4 rounded-sm p-3 text-left transition-colors hover:bg-muted"
+                          onClick={() => {
+                            onProductClick(product)
+                            setIsSearchOpen(false)
+                          }}
+                        >
+                          <div className="flex h-16 w-16 items-center justify-center bg-secondary text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                            Item
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs uppercase tracking-widest text-muted-foreground">{product.category}</p>
+                            <h4 className="truncate font-display text-base font-medium text-foreground">{product.name}</h4>
+                            <p className="text-sm font-semibold text-foreground">{formatCurrency(product.price)}</p>
+                          </div>
+                        </motion.button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="rounded-[2rem] border border-dashed border-border px-6 py-10 text-center text-muted-foreground">
+                  Bắt đầu nhập từ khoá để gọi endpoint tìm kiếm và gợi ý từ backend.
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </>
+      ) : null}
+    </AnimatePresence>
+  )
+}
 
-                                {
-                                    searchQuery.trim() && (
-                                        <div className="border-t border-border pt-4 mx-h-[60vh] overflow-auto">
-                                            {
-                                                filtered?.length === 0 ? (
-                                                    <p className="text-center font-body text-muted-foreground py-8">
-                                                        No products found for "{searchQuery}"
-                                                    </p>
-                                                )
-
-                                                    :
-                                                    (
-                                                        <div className="space-y-3">
-                                                            <p className="font-body text-xs text-muted-foreground tracking-widest uppercase">
-                                                                {filtered?.length} result {filtered?.length !== 1 ? "s" : ""}
-                                                            </p>
-                                                            {
-                                                                filtered?.map((product) => (
-                                                                    <motion.div
-                                                                        key={product.id}
-                                                                        initial={{ opacity: 0, y: 10 }}
-                                                                        animate={{ opacity: 1, y: 0 }}
-                                                                        className="flex items-center gap-4 p-3 hover:bg-muted cursor-pointer transition-colors rounded-sm"
-                                                                        onClick={() => {
-                                                                            onProductClick(product);
-                                                                            setIsSearchOpen(false);
-                                                                        }}
-                                                                    >
-                                                                        <div className="w-16 h-16 bg-secondary shrink-0">
-                                                                            <img
-                                                                                src={product?.image}
-                                                                                alt={product?.name}
-                                                                                className="w-full h-full object-cover"
-                                                                            />
-                                                                        </div>
-                                                                        <div className="flex-1 min-w-0">
-                                                                            <p className="font-body text-xs text-muted-foreground tracking-widest uppercase">
-                                                                                {product?.category}
-                                                                            </p>
-                                                                            <h4 className="font-display text-base font-medium text-foreground truncate">
-                                                                                {product?.name}
-                                                                            </h4>
-                                                                            <p className="font-body text-sm font-semibold text-foreground">
-                                                                                {product?.price}
-                                                                            </p>
-                                                                        </div>
-                                                                    </motion.div>
-                                                                ))
-                                                            }
-                                                        </div>
-                                                    )
-                                            }
-                                        </div>
-                                    )
-                                }
-                            </div>
-                        </motion.div>
-                    </>
-                )
-            }
-
-        </AnimatePresence>
-    );
-};
-
-export default SearchOverlay;
+export default SearchOverlay
