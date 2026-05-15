@@ -1,22 +1,48 @@
 import { apiRequest, buildQueryString } from './http'
 
-const FALLBACK_IMAGE = '/images/hero-banner.jpg'
+const resolveApiOrigin = () => {
+  const configuredBaseUrl = import.meta.env.VITE_API_BASE_URL
+  if (configuredBaseUrl) {
+    return configuredBaseUrl.replace(/\/api\/?$/, '').replace(/\/$/, '')
+  }
+
+  const apiOrigin = import.meta.env.VITE_API_ORIGIN
+  return apiOrigin ? apiOrigin.replace(/\/$/, '') : ''
+}
+
+const API_ORIGIN = resolveApiOrigin()
+
+const normalizeMediaUrl = (url) => {
+  if (!url) {
+    return null
+  }
+
+  if (/^https?:\/\//i.test(url) || /^data:/i.test(url)) {
+    return url
+  }
+
+  if (!API_ORIGIN) {
+    return url
+  }
+
+  return url.startsWith('/') ? `${API_ORIGIN}${url}` : `${API_ORIGIN}/${url}`
+}
 
 const pickPrimaryMediaUrl = (media = []) => {
-  const primaryMedia = media.find((entry) => entry?.primary || entry?.isPrimary)
-  return primaryMedia?.url ?? media[0]?.url ?? null
+  const validMedia = media.filter((entry) => entry?.url && (!entry?.type || entry.type === 'IMAGE'))
+  const primaryMedia = validMedia.find((entry) => entry?.primary || entry?.isPrimary)
+
+  return normalizeMediaUrl(primaryMedia?.url ?? validMedia[0]?.url ?? null)
 }
 
 export const getProductImage = (detail) => {
   if (!detail) {
-    return FALLBACK_IMAGE
+    return null
   }
 
-  const variantImage = (detail.variants ?? [])
-    .flatMap((variant) => variant?.media ?? [])
-    .find((entry) => entry?.primary || entry?.isPrimary)?.url
+  const variantImage = pickPrimaryMediaUrl((detail.variants ?? []).flatMap((variant) => variant?.media ?? []))
 
-  return variantImage ?? pickPrimaryMediaUrl(detail.media) ?? FALLBACK_IMAGE
+  return variantImage ?? pickPrimaryMediaUrl(detail.media) ?? null
 }
 
 export const searchProducts = async ({ q, typeIds, page = 0, size = 12, sort = 'relevance' } = {}) => {

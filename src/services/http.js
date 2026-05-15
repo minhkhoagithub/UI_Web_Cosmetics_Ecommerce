@@ -1,6 +1,22 @@
 import { getStoredAuthSession } from './auth'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api'
+const resolveApiBaseUrl = () => {
+  const configuredBaseUrl = import.meta.env.VITE_API_BASE_URL
+
+  if (configuredBaseUrl) {
+    return configuredBaseUrl.endsWith('/') ? configuredBaseUrl.slice(0, -1) : configuredBaseUrl
+  }
+
+  const apiOrigin = import.meta.env.VITE_API_ORIGIN
+  if (apiOrigin) {
+    const normalizedOrigin = apiOrigin.endsWith('/') ? apiOrigin.slice(0, -1) : apiOrigin
+    return `${normalizedOrigin}/api`
+  }
+
+  return '/api'
+}
+
+const API_BASE_URL = resolveApiBaseUrl()
 
 const parseResponseBody = async (response) => {
   if (response.status === 204) {
