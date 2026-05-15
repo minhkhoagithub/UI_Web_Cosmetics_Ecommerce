@@ -122,7 +122,17 @@ const ProductDetailsModal = ({ product, onClose }) => {
         ) : detailProduct ? (
           <>
             <div className="relative bg-secondary md:w-1/2">
-              <img src={selectedVariant?.image || detailProduct.image} alt={detailProduct.name} className="h-72 w-full object-cover md:h-full" />
+              {selectedVariant?.image || detailProduct.image ? (
+                <img
+                  src={selectedVariant?.image || detailProduct.image}
+                  alt={detailProduct.name}
+                  className="h-72 w-full object-cover md:h-full"
+                />
+              ) : (
+                <div className="flex h-72 w-full items-center justify-center bg-secondary text-sm uppercase tracking-[0.28em] text-muted-foreground md:h-full">
+                  No Preview
+                </div>
+              )}
               <button type="button" className="absolute left-4 top-4 rounded-full bg-background/90 p-3 backdrop-blur-sm">
                 <Heart size={18} fill="currentColor" />
               </button>
