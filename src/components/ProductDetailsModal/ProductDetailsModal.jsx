@@ -1,11 +1,11 @@
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion as Motion } from 'framer-motion'
 import { Heart, LoaderCircle, Minus, Plus, ShoppingBag, Star, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useAuth } from '../../context/AuthProvider'
 import { useCart } from '../../context/CartProvider'
-import { getProductDetail, mapProductDetailToSelection } from '../../services/catalog'
+import { getProductDetail, mapProductDetailToSelection, rememberRecentProduct } from '../../services/catalog'
 import { formatCurrency, formatRating } from '../../utils/format'
 
 const ProductDetailsModal = ({ product, onClose }) => {
@@ -39,6 +39,7 @@ const ProductDetailsModal = ({ product, onClose }) => {
         const resolvedProduct = mapProductDetailToSelection(detail, product)
         setDetailProduct(resolvedProduct)
         setSelectedVariantId(resolvedProduct.variants[0]?.id ?? '')
+        rememberRecentProduct(resolvedProduct)
       } catch (error) {
         if (isSubscribed) {
           setErrorMessage(error.message)
@@ -90,7 +91,7 @@ const ProductDetailsModal = ({ product, onClose }) => {
 
   return (
     <AnimatePresence>
-      <motion.div
+      <Motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -98,7 +99,7 @@ const ProductDetailsModal = ({ product, onClose }) => {
         onClick={onClose}
       />
 
-      <motion.div
+      <Motion.div
         initial={{ opacity: 0, scale: 0.92, y: 24 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.92, y: 24 }}
@@ -212,7 +213,7 @@ const ProductDetailsModal = ({ product, onClose }) => {
                   </button>
                 </div>
 
-                <motion.button
+                <Motion.button
                   type="button"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
@@ -226,12 +227,12 @@ const ProductDetailsModal = ({ product, onClose }) => {
                 >
                   <ShoppingBag size={16} />
                   Thêm vào giỏ
-                </motion.button>
+                </Motion.button>
               </div>
             </div>
           </>
         ) : null}
-      </motion.div>
+      </Motion.div>
     </AnimatePresence>
   )
 }

@@ -11,6 +11,7 @@ const resolveApiOrigin = () => {
 }
 
 const API_ORIGIN = resolveApiOrigin()
+const RECENT_PRODUCTS_KEY = 'eshop_recent_products'
 
 const normalizeMediaUrl = (url) => {
   if (!url) {
@@ -100,6 +101,7 @@ export const mapProductDetailToSelection = (detail, fallback = {}) => {
     slug: detail?.slug ?? fallback.slug,
     category: fallback.category ?? fallback.typeName ?? 'Skincare',
     image: getProductImage(detail),
+    price: resolvedVariants[0]?.price ?? fallback.price,
     description: detail?.descriptionMd || detail?.shortDescription || fallback.description || '',
     rating: fallback.rating ?? 0,
     reviews: fallback.reviews ?? 0,
@@ -112,5 +114,41 @@ export const mapProductDetailToSelection = (detail, fallback = {}) => {
       stockQuantity: variant.stockQuantity,
       image: pickPrimaryMediaUrl(variant.media) ?? getProductImage(detail),
     })),
+  }
+}
+
+const productLinkOf = (product) => {
+  if (typeof window === 'undefined') return ''
+  const id = product?.productId || product?.id
+  return id ? `${window.location.origin}${window.location.pathname}#product-${id}` : window.location.href
+}
+
+export const toChatProductPayload = (product) => ({
+  productId: product?.productId || product?.id || '',
+  variantId: product?.variantId || product?.variants?.[0]?.id || '',
+  productName: product?.name || '',
+  productImageUrl: product?.image || '',
+  productPrice: product?.price ?? product?.variants?.[0]?.price ?? '',
+  linkUrl: product?.linkUrl || productLinkOf(product),
+})
+
+export const rememberRecentProduct = (product) => {
+  if (typeof window === 'undefined' || !product?.productId) return
+
+  const nextItem = toChatProductPayload(product)
+  const currentItems = getRecentProducts()
+  const nextItems = [nextItem, ...currentItems.filter((item) => item.productId !== nextItem.productId)].slice(0, 8)
+  window.localStorage.setItem(RECENT_PRODUCTS_KEY, JSON.stringify(nextItems))
+}
+
+export const getRecentProducts = () => {
+  if (typeof window === 'undefined') return []
+
+  try {
+    const rawValue = window.localStorage.getItem(RECENT_PRODUCTS_KEY)
+    const parsedValue = rawValue ? JSON.parse(rawValue) : []
+    return Array.isArray(parsedValue) ? parsedValue.filter((item) => item?.productId && item?.productName) : []
+  } catch {
+    return []
   }
 }
