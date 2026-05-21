@@ -2,6 +2,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import Navbar from './components/Navbar/Navbar'
 import Footer from './components/Footer/Footer'
+import CustomerChatWidget from './components/CustomerChatWidget/CustomerChatWidget'
 import { AuthProvider } from './context/AuthProvider'
 import CartProvider from './context/CartProvider'
 import Index from './page/index/Index'
@@ -29,6 +30,7 @@ function App() {
           </Routes>
 
           <Footer />
+          <CustomerChatWidget />
         </CartProvider>
       </AuthProvider>
     </BrowserRouter>
