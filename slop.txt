@@ -1,0 +1,83 @@
+// ===============================
+// ĐỘ GỒ GHỀ TRI THEO TỈNH VIỆT NAM
+// TỪ NĂM 2008 - 2024
+// Ranh giới: geoBoundaries CGAZ ADM1
+// DEM: SRTM 30m
+// ===============================
+
+// 1. Ranh giới tỉnh Việt Nam
+var adm1 = ee.FeatureCollection(
+  'projects/sat-io/open-datasets/geoboundaries/CGAZ_ADM1'
+);
+
+var vietnam = adm1.filter(ee.Filter.eq('shapeGroup', 'VNM'));
+
+print('Số tỉnh/thành:', vietnam.size());
+print('Kiểm tra thuộc tính:', vietnam.first());
+
+// 2. DEM SRTM
+var dem = ee.Image('USGS/SRTMGL1_003')
+  .select('elevation')
+  .clip(vietnam);
+
+// 3. Tính TRI
+// TRI = độ lệch chuẩn độ cao trong vùng lân cận
+var kernel = ee.Kernel.square({
+  radius: 1,
+  units: 'pixels'
+});
+
+var tri = dem.reduceNeighborhood({
+  reducer: ee.Reducer.stdDev(),
+  kernel: kernel
+}).rename('TRI');
+
+// 4. Hiển thị bản đồ
+Map.centerObject(vietnam, 6);
+Map.addLayer(vietnam, {color: 'red'}, 'Ranh giới tỉnh');
+Map.addLayer(tri, {
+  min: 0,
+  max: 50,
+  palette: ['white', 'green', 'yellow', 'orange', 'red']
+}, 'Độ gồ ghề TRI');
+
+// 5. Danh sách năm 2008-2024
+var years = ee.List.sequence(2008, 2024);
+
+// 6. Hàm tính TRI trung bình cho từng năm
+var getTRIByYear = function(year) {
+  year = ee.Number(year);
+
+  var triByProvince = tri.reduceRegions({
+    collection: vietnam,
+    reducer: ee.Reducer.mean(),
+    scale: 30,
+    tileScale: 4
+  });
+
+  var resultByYear = triByProvince.map(function(f) {
+    return ee.Feature(null, {
+      'nam': year,
+      'tinh_thanh': f.get('shapeName'),
+      'do_go_ghe_TRI': f.get('mean')
+    });
+  });
+
+  return resultByYear;
+};
+
+// 7. Gộp dữ liệu tất cả các năm
+var result = ee.FeatureCollection(
+  years.map(getTRIByYear)
+).flatten();
+
+print('Kết quả TRI 2008-2024:', result);
+
+// 8. Xuất CSV về Google Drive
+Export.table.toDrive({
+  collection: result,
+  description: 'Do_go_ghe_TRI_Vietnam_2008_2024',
+  folder: 'GEE_Exports',
+  fileNamePrefix: 'do_go_ghe_TRI_vietnam_2008_2024',
+  fileFormat: 'CSV'
+});

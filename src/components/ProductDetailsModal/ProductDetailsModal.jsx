@@ -1,16 +1,12 @@
 import { AnimatePresence, motion as Motion } from 'framer-motion'
 import { Heart, LoaderCircle, Minus, Plus, ShoppingBag, Star, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { useAuth } from '../../context/AuthProvider'
 import { useCart } from '../../context/CartProvider'
 import { getProductDetail, mapProductDetailToSelection, rememberRecentProduct } from '../../services/catalog'
 import { formatCurrency, formatRating } from '../../utils/format'
 
 const ProductDetailsModal = ({ product, onClose }) => {
-  const navigate = useNavigate()
-  const { isAuthenticated } = useAuth()
   const { addToCart } = useCart()
   const [detailProduct, setDetailProduct] = useState(null)
   const [selectedVariantId, setSelectedVariantId] = useState('')
@@ -66,25 +62,18 @@ const ProductDetailsModal = ({ product, onClose }) => {
   const maxAllowedQuantity = Math.max(1, Number(selectedVariant?.stockQuantity ?? 1))
 
   const handleAdd = () => {
-    if (!isAuthenticated) {
-      toast.info('Vui lòng đăng nhập trước khi mua hàng.')
-      onClose()
-      navigate('/login', { replace: true })
-      return
-    }
-
     if (!detailProduct || !selectedVariant) {
-      toast.error('Sản phẩm hiện chưa sẵn sàng để thêm vào giỏ hàng.')
+      toast.error('San pham hien chua san sang de them vao gio hang.')
       return
     }
 
     if (selectedVariant.stockQuantity <= 0) {
-      toast.error('Biến thể này hiện đã hết hàng.')
+      toast.error('Bien the nay hien da het hang.')
       return
     }
 
     addToCart(detailProduct, selectedVariant, quantity)
-    toast.success('Đã thêm sản phẩm vào giỏ hàng.')
+    toast.success('Da them san pham vao gio hang.')
     setQuantity(1)
     onClose()
   }
@@ -148,7 +137,7 @@ const ProductDetailsModal = ({ product, onClose }) => {
                   <Star size={14} fill="currentColor" />
                 </div>
                 <span className="text-sm text-muted-foreground">
-                  {formatRating(detailProduct.rating)} - {detailProduct.reviews} đánh giá
+                  {formatRating(detailProduct.rating)} - {detailProduct.reviews} danh gia
                 </span>
               </div>
 
@@ -157,16 +146,16 @@ const ProductDetailsModal = ({ product, onClose }) => {
                   {formatCurrency(selectedVariant?.price ?? detailProduct.variants[0]?.price ?? 0)}
                 </span>
                 {selectedVariant ? (
-                  <span className="text-sm text-muted-foreground">Kho còn {selectedVariant.stockQuantity}</span>
+                  <span className="text-sm text-muted-foreground">Kho con {selectedVariant.stockQuantity}</span>
                 ) : null}
               </div>
 
               <p className="mb-6 text-sm leading-7 text-muted-foreground">
-                {detailProduct.description || 'Sản phẩm đã được đồng bộ từ backend. Hãy chọn biến thể phù hợp trước khi thêm vào giỏ.'}
+                {detailProduct.description || 'San pham da duoc dong bo tu backend. Hay chon bien the phu hop truoc khi them vao gio.'}
               </p>
 
               <div className="mb-6">
-                <p className="mb-3 text-xs uppercase tracking-[0.28em] text-muted-foreground">Biến thể khả dụng</p>
+                <p className="mb-3 text-xs uppercase tracking-[0.28em] text-muted-foreground">Bien the kha dung</p>
                 <div className="grid gap-3">
                   {detailProduct.variants.map((variant) => (
                     <button
@@ -186,7 +175,7 @@ const ProductDetailsModal = ({ product, onClose }) => {
                         </div>
                         <div className="text-right">
                           <p className="font-semibold text-foreground">{formatCurrency(variant.price)}</p>
-                          <p className="mt-1 text-xs text-muted-foreground">Tồn kho {variant.stockQuantity}</p>
+                          <p className="mt-1 text-xs text-muted-foreground">Ton kho {variant.stockQuantity}</p>
                         </div>
                       </div>
                     </button>
@@ -226,7 +215,7 @@ const ProductDetailsModal = ({ product, onClose }) => {
                   }`}
                 >
                   <ShoppingBag size={16} />
-                  Thêm vào giỏ
+                  Them vao gio
                 </Motion.button>
               </div>
             </div>

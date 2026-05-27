@@ -1,14 +1,11 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { SearchIcon, X } from 'lucide-react'
 import { useDeferredValue, useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { useAuth } from '../../context/AuthProvider'
 import { useCart } from '../../context/CartProvider'
 import { getProductSuggestions, mapSearchItemToCard, searchProducts } from '../../services/catalog'
 import { formatCurrency } from '../../utils/format'
 
 const SearchOverlay = ({ onProductClick }) => {
-  const { isAuthenticated } = useAuth()
   const { isSearchOpen, setIsSearchOpen, searchQuery, setSearchQuery } = useCart()
   const inputRef = useRef(null)
   const deferredQuery = useDeferredValue(searchQuery)
@@ -27,7 +24,7 @@ const SearchOverlay = ({ onProductClick }) => {
   }, [isSearchOpen, setSearchQuery])
 
   useEffect(() => {
-    if (!isSearchOpen || !isAuthenticated) {
+    if (!isSearchOpen) {
       return
     }
 
@@ -71,7 +68,7 @@ const SearchOverlay = ({ onProductClick }) => {
     return () => {
       isSubscribed = false
     }
-  }, [deferredQuery, isAuthenticated, isSearchOpen])
+  }, [deferredQuery, isSearchOpen])
 
   return (
     <AnimatePresence>
@@ -100,7 +97,7 @@ const SearchOverlay = ({ onProductClick }) => {
                   onChange={(event) => setSearchQuery(event.target.value)}
                   value={searchQuery}
                   type="text"
-                  placeholder="Tìm theo tên, dòng sản phẩm hoặc insight chăm sóc da..."
+                  placeholder="Tim theo ten, dong san pham hoac insight cham soc da..."
                   className="flex-1 bg-transparent font-body text-lg text-foreground outline-none placeholder:text-muted-foreground"
                 />
 
@@ -113,20 +110,7 @@ const SearchOverlay = ({ onProductClick }) => {
                 </button>
               </div>
 
-              {!isAuthenticated ? (
-                <div className="rounded-[2rem] border border-border px-6 py-8 text-center">
-                  <p className="text-sm leading-7 text-muted-foreground">
-                    Tìm kiếm sản phẩm thật từ backend chỉ khả dụng sau khi đăng nhập.
-                  </p>
-                  <Link
-                    to="/login"
-                    onClick={() => setIsSearchOpen(false)}
-                    className="mt-5 inline-flex rounded-full bg-foreground px-5 py-3 text-sm font-semibold uppercase tracking-[0.22em] text-primary-foreground"
-                  >
-                    Đăng nhập
-                  </Link>
-                </div>
-              ) : searchQuery.trim() ? (
+              {searchQuery.trim() ? (
                 <div className="max-h-[60vh] overflow-auto border-t border-border pt-4">
                   {suggestions.length > 0 ? (
                     <div className="mb-4 flex flex-wrap gap-2">
@@ -144,14 +128,12 @@ const SearchOverlay = ({ onProductClick }) => {
                   ) : null}
 
                   {isLoading ? (
-                    <p className="py-8 text-center text-muted-foreground">Đang tìm sản phẩm phù hợp...</p>
+                    <p className="py-8 text-center text-muted-foreground">Dang tim san pham phu hop...</p>
                   ) : results.length === 0 ? (
-                    <p className="py-8 text-center text-muted-foreground">Không tìm thấy sản phẩm phù hợp với "{searchQuery}"</p>
+                    <p className="py-8 text-center text-muted-foreground">Khong tim thay san pham phu hop voi "{searchQuery}"</p>
                   ) : (
                     <div className="space-y-3">
-                      <p className="text-xs uppercase tracking-widest text-muted-foreground">
-                        {results.length} kết quả
-                      </p>
+                      <p className="text-xs uppercase tracking-widest text-muted-foreground">{results.length} ket qua</p>
 
                       {results.map((product) => (
                         <motion.button
@@ -180,7 +162,7 @@ const SearchOverlay = ({ onProductClick }) => {
                 </div>
               ) : (
                 <div className="rounded-[2rem] border border-dashed border-border px-6 py-10 text-center text-muted-foreground">
-                  Bắt đầu nhập từ khoá để gọi endpoint tìm kiếm và gợi ý từ backend.
+                  Bat dau nhap tu khoa de goi endpoint tim kiem va goi y tu backend.
                 </div>
               )}
             </div>

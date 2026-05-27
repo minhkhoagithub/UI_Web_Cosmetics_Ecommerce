@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowLeft, ExternalLink, LoaderCircle, RefreshCcw, ShieldCheck } from 'lucide-react'
-import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
-import { useAuth } from '../../context/AuthProvider'
 import { createPaymentRequest, getPaymentByOrderRequest } from '../../services/payment'
 import {
   formatCurrency,
@@ -15,7 +14,6 @@ const OPENED_PAYMENT_KEY_PREFIX = 'cosmetics-shop.payment-window'
 const PaymentStatus = () => {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { isAuthenticated } = useAuth()
   const orderId = searchParams.get('orderId')
   const orderNo = searchParams.get('orderNo')
   const method = searchParams.get('method') ?? 'COD'
@@ -68,12 +66,12 @@ const PaymentStatus = () => {
   }
 
   useEffect(() => {
-    if (!isAuthenticated || !orderId) {
+    if (!orderId) {
       return
     }
 
     loadPaymentStatus()
-  }, [isAuthenticated, orderId])
+  }, [orderId])
 
   useEffect(() => {
     if (callbackSource !== 'vnpay-return' || !callbackMessage) {
@@ -130,9 +128,9 @@ const PaymentStatus = () => {
     const popup = window.open(payment.paymentRedirectUrl, '_blank', 'noopener,noreferrer')
     if (popup) {
       window.sessionStorage.setItem(storageKey, 'opened')
-      toast.success('Đã mở cổng thanh toán VNPAY ở tab mới.')
+      toast.success('Da mo cong thanh toan VNPAY o tab moi.')
     }
-  }, [method, orderId, payment?.paymentRedirectUrl])
+  }, [method, orderId, payment?.paymentRedirectUrl, callbackSource])
 
   const handleRefresh = async () => {
     await loadPaymentStatus({ silent: true })
@@ -162,7 +160,7 @@ const PaymentStatus = () => {
         window.open(recreatedPayment.paymentRedirectUrl, '_blank', 'noopener,noreferrer')
       }
 
-      toast.success('Đã khởi tạo lại giao dịch thanh toán.')
+      toast.success('Da khoi tao lai giao dich thanh toan.')
     } catch (error) {
       toast.error(error.message)
     } finally {
@@ -176,30 +174,26 @@ const PaymentStatus = () => {
   const showRetryButton = ['FAILED', 'CANCELLED', 'EXPIRED'].includes(payment?.transactionStatus)
   const headline =
     method === 'COD'
-      ? 'Đơn hàng của bạn đã được ghi nhận'
+      ? 'Don hang cua ban da duoc ghi nhan'
       : payment?.orderPaymentStatus === 'PAID'
-        ? 'Thanh toán đã hoàn tất'
-        : 'Đang chờ hoàn tất thanh toán'
+        ? 'Thanh toan da hoan tat'
+        : 'Dang cho hoan tat thanh toan'
 
   const helperText = useMemo(() => {
     if (method === 'COD') {
-      return 'Bạn sẽ thanh toán khi nhận hàng. Đội ngũ vận hành sẽ xử lý đơn của bạn sớm nhất có thể.'
+      return 'Ban se thanh toan khi nhan hang. Doi ngu van hanh se xu ly don cua ban som nhat co the.'
     }
 
     if (payment?.orderPaymentStatus === 'PAID') {
-      return 'Backend đã xác nhận giao dịch thành công. Bạn có thể yên tâm quay lại tiếp tục mua sắm.'
+      return 'Backend da xac nhan giao dich thanh cong. Ban co the yen tam quay lai tiep tuc mua sam.'
     }
 
     if (method === 'SEPAY') {
-      return 'Vui lòng chuyển khoản đúng số tiền và nội dung bên dưới. Hệ thống sẽ tự động cập nhật trạng thái sau khi nhận webhook.'
+      return 'Vui long chuyen khoan dung so tien va noi dung ben duoi. He thong se tu dong cap nhat trang thai sau khi nhan webhook.'
     }
 
-    return 'Nếu tab thanh toán chưa mở, bạn có thể dùng nút bên dưới để mở lại cổng thanh toán. Trang này sẽ tự động cập nhật khi backend nhận callback.'
+    return 'Neu tab thanh toan chua mo, ban co the dung nut ben duoi de mo lai cong thanh toan. Trang nay se tu dong cap nhat khi backend nhan callback.'
   }, [method, payment?.orderPaymentStatus])
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />
-  }
 
   if (!orderId) {
     return <Navigate to="/" replace />
@@ -214,7 +208,7 @@ const PaymentStatus = () => {
           className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
           <ArrowLeft size={16} />
-          Quay lại trang chủ
+          Quay lai trang chu
         </button>
 
         <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
@@ -239,19 +233,19 @@ const PaymentStatus = () => {
 
                 <div className="mt-8 grid gap-4 rounded-[2rem] bg-secondary/55 p-5 sm:grid-cols-2">
                   <div>
-                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Mã đơn hàng</p>
+                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Ma don hang</p>
                     <p className="mt-2 font-semibold text-foreground">{orderNo || orderId}</p>
                   </div>
                   <div>
-                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Phương thức</p>
+                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Phuong thuc</p>
                     <p className="mt-2 font-semibold text-foreground">{method}</p>
                   </div>
                   <div>
-                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Mã giao dịch</p>
-                    <p className="mt-2 break-all font-semibold text-foreground">{payment?.transactionRef || 'Đang cập nhật'}</p>
+                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Ma giao dich</p>
+                    <p className="mt-2 break-all font-semibold text-foreground">{payment?.transactionRef || 'Dang cap nhat'}</p>
                   </div>
                   <div>
-                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Số tiền</p>
+                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">So tien</p>
                     <p className="mt-2 font-semibold text-foreground">{formatCurrency(payment?.amount ?? paymentInfo.amount ?? 0)}</p>
                   </div>
                 </div>
@@ -265,19 +259,19 @@ const PaymentStatus = () => {
 
                       <div className="space-y-4">
                         <div>
-                          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Ngân hàng</p>
+                          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Ngan hang</p>
                           <p className="mt-2 font-semibold text-foreground">{paymentInfo.bankCode || 'N/A'}</p>
                         </div>
                         <div>
-                          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Số tài khoản</p>
+                          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">So tai khoan</p>
                           <p className="mt-2 font-semibold text-foreground">{paymentInfo.accountNumber || 'N/A'}</p>
                         </div>
                         <div>
-                          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Chủ tài khoản</p>
+                          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Chu tai khoan</p>
                           <p className="mt-2 font-semibold text-foreground">{paymentInfo.accountName || 'N/A'}</p>
                         </div>
                         <div>
-                          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Nội dung chuyển khoản</p>
+                          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Noi dung chuyen khoan</p>
                           <p className="mt-2 break-all font-semibold text-foreground">{paymentInfo.transferContent || payment?.transactionRef}</p>
                         </div>
                       </div>
@@ -297,7 +291,7 @@ const PaymentStatus = () => {
                     }`}
                   >
                     {isRefreshing ? <LoaderCircle size={16} className="animate-spin" /> : <RefreshCcw size={16} />}
-                    Làm mới trạng thái
+                    Lam moi trang thai
                   </button>
 
                   {method === 'VNPAY' && payment?.paymentRedirectUrl ? (
@@ -307,7 +301,7 @@ const PaymentStatus = () => {
                       className="inline-flex items-center gap-2 rounded-full border border-border px-5 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-foreground transition hover:border-foreground"
                     >
                       <ExternalLink size={16} />
-                      Mở lại VNPAY
+                      Mo lai VNPAY
                     </button>
                   ) : null}
 
@@ -323,42 +317,13 @@ const PaymentStatus = () => {
                       }`}
                     >
                       {isRetrying ? <LoaderCircle size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
-                      Tạo lại thanh toán
+                      Tao lai thanh toan
                     </button>
                   ) : null}
                 </div>
               </>
             )}
           </div>
-
-          {/* <aside className="rounded-[2rem] border border-border bg-secondary/45 p-8">
-            <p className="text-xs uppercase tracking-[0.28em] text-muted-foreground">Điều hướng tiếp theo</p>
-            <h2 className="mt-3 font-display text-2xl font-semibold text-foreground">Sau khi thanh toán</h2>
-            <div className="mt-6 space-y-4 text-sm leading-7 text-muted-foreground">
-              <p>1. Hệ thống backend sẽ cập nhật `payment transaction` và chuyển trạng thái đơn sang `PAID` khi giao dịch thành công.</p>
-              <p>2. Với VNPAY, callback hoặc IPN có thể đến sau vài giây; trang này sẽ tự động polling để đồng bộ trạng thái mới nhất.</p>
-              <p>3. Với SEPAY, hãy chuyển đúng số tiền và nội dung để backend match chính xác giao dịch.</p>
-            </div>
-
-            <div className="mt-8 rounded-[1.75rem] bg-background p-5">
-              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Liên kết nhanh</p>
-              <div className="mt-4 flex flex-col gap-3">
-                <Link
-                  to="/"
-                  className="inline-flex items-center justify-center rounded-full bg-foreground px-5 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-primary-foreground transition hover:-translate-y-0.5"
-                >
-                  Tiếp tục mua sắm
-                </Link>
-                <button
-                  type="button"
-                  onClick={handleRefresh}
-                  className="inline-flex items-center justify-center rounded-full border border-border px-5 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-foreground transition hover:border-foreground"
-                >
-                  Kiểm tra lại trạng thái
-                </button>
-              </div>
-            </div>
-          </aside> */}
         </div>
       </div>
     </section>

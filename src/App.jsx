@@ -8,8 +8,10 @@ import CartProvider from './context/CartProvider'
 import Index from './page/index/Index'
 import Login from './page/login/Login'
 import NotFound from './page/not_found/NotFound'
+import OrderHistory from './page/order_history/OrderHistory'
 import PaymentResult from './page/payment_result/PaymentResult'
 import PaymentStatus from './page/payment_status/PaymentStatus'
+import Profile from './page/profile/Profile'
 import Register from './page/register/Register'
 
 function App() {
@@ -24,6 +26,8 @@ function App() {
             <Route index element={<Index />} />
             <Route path="login" element={<Login />} />
             <Route path="register" element={<Register />} />
+            <Route path="profile" element={<Profile />} />
+            <Route path="order-history" element={<OrderHistory />} />
             <Route path="payment-result" element={<PaymentResult />} />
             <Route path="payment-status" element={<PaymentStatus />} />
             <Route path="*" element={<NotFound />} />
