@@ -1,13 +1,15 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
 import {
   clearStoredAuthSession,
   getStoredAuthSession,
   loginRequest,
   logoutRequest,
+  replaceStoredAuthSession,
   registerRequest,
   storeAuthSession,
   verifyRegistrationOtpRequest,
 } from '../services/auth'
+import { getCurrentUserProfileRequest } from '../services/user'
 
 const AuthContext = createContext(null)
 
@@ -67,6 +69,66 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
+  const syncUser = (userPatch) => {
+    setSession((currentSession) => {
+      if (!currentSession) {
+        return currentSession
+      }
+
+      const nextSession = {
+        ...currentSession,
+        user: {
+          ...currentSession.user,
+          ...userPatch,
+        },
+      }
+
+      replaceStoredAuthSession(nextSession)
+      return nextSession
+    })
+  }
+
+  useEffect(() => {
+    if (!session?.accessToken || session?.user?.fullName?.trim()) {
+      return
+    }
+
+    let isSubscribed = true
+
+    const hydrateCurrentUser = async () => {
+      try {
+        const profile = await getCurrentUserProfileRequest()
+        if (!isSubscribed) {
+          return
+        }
+
+        const nextSession = {
+          ...session,
+          user: {
+            ...session.user,
+            email: profile?.email ?? session.user?.email ?? '',
+            userId: profile?.id ?? session.user?.userId ?? '',
+            role: profile?.role ?? session.user?.role ?? '',
+            fullName: profile?.fullName ?? '',
+            phone: profile?.phone ?? '',
+            avatarUrl: profile?.avatarUrl ?? '',
+          },
+        }
+
+        replaceStoredAuthSession(nextSession)
+        setSession(nextSession)
+      } catch {
+        // Keep the current session as-is if hydration fails.
+      }
+    }
+
+    hydrateCurrentUser()
+
+    return () => {
+      isSubscribed = false
+    }
+  }, [session])
+
   return (
     <AuthContext.Provider
       value={{
@@ -80,6 +142,7 @@ export const AuthProvider = ({ children }) => {
         registerUser,
         verifyRegistrationOtp,
         logout,
+        syncUser,
       }}
     >
       {children}

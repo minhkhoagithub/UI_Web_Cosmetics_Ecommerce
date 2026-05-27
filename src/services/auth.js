@@ -66,6 +66,9 @@ const normalizeSession = (session) => {
       email: tokenPayload?.sub ?? session.user?.email ?? '',
       userId: tokenPayload?.userId ?? session.user?.userId ?? '',
       role: tokenPayload?.role ?? session.user?.role ?? '',
+      fullName: session.user?.fullName ?? '',
+      phone: session.user?.phone ?? '',
+      avatarUrl: session.user?.avatarUrl ?? '',
     },
   }
 }
@@ -129,6 +132,23 @@ export const storeAuthSession = (session, remember) => {
 
   const storage = remember ? window.localStorage : window.sessionStorage
   storage.setItem(AUTH_STORAGE_KEY, JSON.stringify(normalizedSession))
+}
+
+export const replaceStoredAuthSession = (session) => {
+  if (!isBrowser) {
+    return
+  }
+
+  const normalizedSession = normalizeSession(session)
+
+  if (!normalizedSession) {
+    clearStoredAuthSession()
+    return
+  }
+
+  const targetStorage = window.localStorage.getItem(AUTH_STORAGE_KEY) ? window.localStorage : window.sessionStorage
+  clearStoredAuthSession()
+  targetStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(normalizedSession))
 }
 
 const parseResponseBody = async (response) => {

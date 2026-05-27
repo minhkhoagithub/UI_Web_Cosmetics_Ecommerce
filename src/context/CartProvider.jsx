@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from './AuthProvider'
 
 const CartContext = createContext(null)
@@ -27,6 +27,7 @@ const readStoredCart = (userId) => {
 
 const CartProvider = ({ children }) => {
   const { user } = useAuth()
+  const previousUserIdRef = useRef(user?.userId ?? '')
   const [isCartOpen, setIsCartOpen] = useState(false)
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
@@ -34,7 +35,25 @@ const CartProvider = ({ children }) => {
   const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
-    setItems(readStoredCart(user?.userId))
+    const currentUserId = user?.userId ?? ''
+    const previousUserId = previousUserIdRef.current
+
+    if (!previousUserId && currentUserId) {
+      const guestItems = readStoredCart()
+      const userItems = readStoredCart(currentUserId)
+
+      if (guestItems.length > 0 && userItems.length === 0) {
+        setItems(guestItems)
+        if (typeof window !== 'undefined') {
+          window.localStorage.removeItem(getCartStorageKey())
+        }
+        previousUserIdRef.current = currentUserId
+        return
+      }
+    }
+
+    setItems(readStoredCart(currentUserId))
+    previousUserIdRef.current = currentUserId
   }, [user?.userId])
 
   useEffect(() => {

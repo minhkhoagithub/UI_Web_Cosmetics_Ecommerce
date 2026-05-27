@@ -1,24 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { LoaderCircle } from 'lucide-react'
-import { useAuth } from '../../context/AuthProvider'
 import { getProductDetail, mapSearchItemToCard, searchProducts } from '../../services/catalog'
 import ProductCard from '../ProductCard/ProductCard'
 
 const Products = ({ setSelectedProduct }) => {
-  const { isAuthenticated } = useAuth()
   const [products, setProducts] = useState([])
   const [activeCategory, setActiveCategory] = useState('All')
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      setProducts([])
-      setErrorMessage('')
-      return
-    }
-
     let isSubscribed = true
 
     const loadProducts = async () => {
@@ -63,7 +54,7 @@ const Products = ({ setSelectedProduct }) => {
     return () => {
       isSubscribed = false
     }
-  }, [isAuthenticated])
+  }, [])
 
   const categories = useMemo(
     () => ['All', ...Array.from(new Set(products.map((product) => product.category).filter(Boolean)))],
@@ -91,24 +82,7 @@ const Products = ({ setSelectedProduct }) => {
         <h2 className="font-display text-3xl font-semibold text-foreground md:text-4xl">Featured Products</h2>
       </div>
 
-      {!isAuthenticated ? (
-        <div className="mx-auto max-w-3xl rounded-[2rem] border border-border bg-secondary/45 px-8 py-12 text-center">
-          <p className="text-xs uppercase tracking-[0.28em] text-muted-foreground">Private Storefront</p>
-          <h3 className="mt-4 font-display text-3xl font-semibold text-foreground">
-            Đăng nhập để tải catalog thực từ backend
-          </h3>
-          <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-muted-foreground">
-            Sau khi đăng nhập, UI sẽ gọi trực tiếp các endpoint tìm kiếm sản phẩm, chi tiết sản phẩm, giỏ hàng, đặt hàng và
-            thanh toán thay cho dữ liệu demo.
-          </p>
-          <Link
-            to="/login"
-            className="mt-8 inline-flex rounded-full bg-foreground px-6 py-3 text-sm font-semibold uppercase tracking-[0.22em] text-primary-foreground transition hover:-translate-y-0.5"
-          >
-            Đăng nhập để mua hàng
-          </Link>
-        </div>
-      ) : isLoading ? (
+      {isLoading ? (
         <div className="flex min-h-72 items-center justify-center">
           <LoaderCircle className="animate-spin text-foreground" size={28} />
         </div>
@@ -137,7 +111,7 @@ const Products = ({ setSelectedProduct }) => {
 
           {filteredProducts.length === 0 ? (
             <div className="rounded-[2rem] border border-border px-6 py-10 text-center text-muted-foreground">
-              Không có sản phẩm phù hợp với bộ lọc hiện tại.
+              Khong co san pham phu hop voi bo loc hien tai.
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
