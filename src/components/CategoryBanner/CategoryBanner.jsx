@@ -3,20 +3,20 @@ import { ArrowRight, Award, Sparkles, TrendingUp } from "lucide-react";
 
 const categories = [
     {
-        title: "New Arrivals",
-        desc: "Discover the latest additions",
+        title: "Sản phẩm mới",
+        desc: "Khám phá những lựa chọn vừa cập nhật",
         icon: Sparkles,
         gradient: "from-accent/10 to-accent/5"
     },
     {
-        title: "Best Sellers",
-        desc: "Most loved by our customers",
+        title: "Bán chạy nhất",
+        desc: "Những sản phẩm được khách hàng yêu thích",
         icon: TrendingUp,
         gradient: "from-primary/5 to-muted"
     },
     {
-        title: "Premium Collection",
-        desc: "Handpicked luxury items",
+        title: "Bộ sưu tập cao cấp",
+        desc: "Các sản phẩm được tuyển chọn kỹ lưỡng",
         icon: Award,
         gradient: "from-accent/5 to-secondary"
     }
@@ -41,7 +41,7 @@ const CategoryBanner = () => {
                             <h3 className="font-display text-xl font-semibold text-foreground mb-2">{cat.title}</h3>
                             <p className="font-body text-sm text-muted-foreground">{cat.desc}</p>
                             <span className="mt-4 font-body text-xs tracking-widest uppercase text-foreground border-b border-foreground pb-0.5 group-hover:border-accent group-hover:text-accent transition-colors flex items-center gap-2 max-w-max">
-                                explore <ArrowRight size={20} />
+                                Khám phá <ArrowRight size={20} />
                             </span>
                         </motion.div>
                     ))

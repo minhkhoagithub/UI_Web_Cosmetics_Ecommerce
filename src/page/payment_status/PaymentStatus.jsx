@@ -128,7 +128,7 @@ const PaymentStatus = () => {
     const popup = window.open(payment.paymentRedirectUrl, '_blank', 'noopener,noreferrer')
     if (popup) {
       window.sessionStorage.setItem(storageKey, 'opened')
-      toast.success('Da mo cong thanh toan VNPAY o tab moi.')
+      toast.success('Đã mở cổng thanh toán VNPAY ở tab mới.')
     }
   }, [method, orderId, payment?.paymentRedirectUrl, callbackSource])
 
@@ -160,7 +160,7 @@ const PaymentStatus = () => {
         window.open(recreatedPayment.paymentRedirectUrl, '_blank', 'noopener,noreferrer')
       }
 
-      toast.success('Da khoi tao lai giao dich thanh toan.')
+      toast.success('Đã khởi tạo lại giao dịch thanh toán.')
     } catch (error) {
       toast.error(error.message)
     } finally {
@@ -174,25 +174,25 @@ const PaymentStatus = () => {
   const showRetryButton = ['FAILED', 'CANCELLED', 'EXPIRED'].includes(payment?.transactionStatus)
   const headline =
     method === 'COD'
-      ? 'Don hang cua ban da duoc ghi nhan'
+      ? 'Đơn hàng của bạn đã được ghi nhận'
       : payment?.orderPaymentStatus === 'PAID'
-        ? 'Thanh toan da hoan tat'
-        : 'Dang cho hoan tat thanh toan'
+        ? 'Thanh toán đã hoàn tất'
+        : 'Đang chờ hoàn tất thanh toán'
 
   const helperText = useMemo(() => {
     if (method === 'COD') {
-      return 'Ban se thanh toan khi nhan hang. Doi ngu van hanh se xu ly don cua ban som nhat co the.'
+      return 'Bạn sẽ thanh toán khi nhận hàng. Đội ngũ vận hành sẽ xử lý đơn của bạn sớm nhất có thể.'
     }
 
     if (payment?.orderPaymentStatus === 'PAID') {
-      return 'Backend da xac nhan giao dich thanh cong. Ban co the yen tam quay lai tiep tuc mua sam.'
+      return 'Hệ thống đã xác nhận giao dịch thành công. Bạn có thể yên tâm quay lại tiếp tục mua sắm.'
     }
 
     if (method === 'SEPAY') {
-      return 'Vui long chuyen khoan dung so tien va noi dung ben duoi. He thong se tu dong cap nhat trang thai sau khi nhan webhook.'
+      return 'Vui lòng chuyển khoản đúng số tiền và nội dung bên dưới. Hệ thống sẽ tự động cập nhật trạng thái sau khi nhận webhook.'
     }
 
-    return 'Neu tab thanh toan chua mo, ban co the dung nut ben duoi de mo lai cong thanh toan. Trang nay se tu dong cap nhat khi backend nhan callback.'
+    return 'Nếu tab thanh toán chưa mở, bạn có thể dùng nút bên dưới để mở lại cổng thanh toán. Trang này sẽ tự động cập nhật khi hệ thống nhận phản hồi thanh toán.'
   }, [method, payment?.orderPaymentStatus])
 
   if (!orderId) {
@@ -208,7 +208,7 @@ const PaymentStatus = () => {
           className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
           <ArrowLeft size={16} />
-          Quay lai trang chu
+          Quay lại trang chủ
         </button>
 
         <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
@@ -221,7 +221,7 @@ const PaymentStatus = () => {
               <>
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
-                    <p className="text-xs uppercase tracking-[0.28em] text-muted-foreground">Payment Tracking</p>
+                    <p className="text-xs uppercase tracking-[0.28em] text-muted-foreground">Theo dõi thanh toán</p>
                     <h1 className="mt-3 font-display text-3xl font-semibold text-foreground">{headline}</h1>
                     <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground">{helperText}</p>
                   </div>
@@ -233,19 +233,19 @@ const PaymentStatus = () => {
 
                 <div className="mt-8 grid gap-4 rounded-[2rem] bg-secondary/55 p-5 sm:grid-cols-2">
                   <div>
-                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Ma don hang</p>
+                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Mã đơn hàng</p>
                     <p className="mt-2 font-semibold text-foreground">{orderNo || orderId}</p>
                   </div>
                   <div>
-                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Phuong thuc</p>
+                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Phương thức</p>
                     <p className="mt-2 font-semibold text-foreground">{method}</p>
                   </div>
                   <div>
-                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Ma giao dich</p>
-                    <p className="mt-2 break-all font-semibold text-foreground">{payment?.transactionRef || 'Dang cap nhat'}</p>
+                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Mã giao dịch</p>
+                    <p className="mt-2 break-all font-semibold text-foreground">{payment?.transactionRef || 'Đang cập nhật'}</p>
                   </div>
                   <div>
-                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">So tien</p>
+                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Số tiền</p>
                     <p className="mt-2 font-semibold text-foreground">{formatCurrency(payment?.amount ?? paymentInfo.amount ?? 0)}</p>
                   </div>
                 </div>
@@ -259,19 +259,19 @@ const PaymentStatus = () => {
 
                       <div className="space-y-4">
                         <div>
-                          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Ngan hang</p>
+                          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Ngân hàng</p>
                           <p className="mt-2 font-semibold text-foreground">{paymentInfo.bankCode || 'N/A'}</p>
                         </div>
                         <div>
-                          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">So tai khoan</p>
+                          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Số tài khoản</p>
                           <p className="mt-2 font-semibold text-foreground">{paymentInfo.accountNumber || 'N/A'}</p>
                         </div>
                         <div>
-                          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Chu tai khoan</p>
+                          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Chủ tài khoản</p>
                           <p className="mt-2 font-semibold text-foreground">{paymentInfo.accountName || 'N/A'}</p>
                         </div>
                         <div>
-                          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Noi dung chuyen khoan</p>
+                          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Nội dung chuyển khoản</p>
                           <p className="mt-2 break-all font-semibold text-foreground">{paymentInfo.transferContent || payment?.transactionRef}</p>
                         </div>
                       </div>
@@ -291,7 +291,7 @@ const PaymentStatus = () => {
                     }`}
                   >
                     {isRefreshing ? <LoaderCircle size={16} className="animate-spin" /> : <RefreshCcw size={16} />}
-                    Lam moi trang thai
+                    Làm mới trạng thái
                   </button>
 
                   {method === 'VNPAY' && payment?.paymentRedirectUrl ? (
@@ -301,7 +301,7 @@ const PaymentStatus = () => {
                       className="inline-flex items-center gap-2 rounded-full border border-border px-5 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-foreground transition hover:border-foreground"
                     >
                       <ExternalLink size={16} />
-                      Mo lai VNPAY
+                      Mở lại VNPAY
                     </button>
                   ) : null}
 
@@ -317,7 +317,7 @@ const PaymentStatus = () => {
                       }`}
                     >
                       {isRetrying ? <LoaderCircle size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
-                      Tao lai thanh toan
+                      Tạo lại thanh toán
                     </button>
                   ) : null}
                 </div>

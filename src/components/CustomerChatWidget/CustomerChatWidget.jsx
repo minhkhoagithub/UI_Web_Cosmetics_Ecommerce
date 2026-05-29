@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Image as ImageIcon, Link as LinkIcon, MessageCircle, Minus, Send, ShoppingBag, UserRound, Video } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -32,7 +32,7 @@ const asList = (data) => {
 }
 
 const messageText = (message) => {
-  return message?.content || message?.text || message?.message || message?.linkUrl || message?.imageUrl || message?.videoUrl || '[Khong co noi dung]'
+  return message?.content || message?.text || message?.message || message?.linkUrl || message?.imageUrl || message?.videoUrl || '[Không có nội dung]'
 }
 
 const messageTime = (message) => {
@@ -92,7 +92,7 @@ function MessageContent ({ message, mine, onAddProduct }) {
   if (message?.type === 'IMAGE' || message?.imageUrl) {
     return (
       <div className="space-y-2">
-        <img src={message.imageUrl} alt={content || 'Anh chat'} className="max-h-56 w-full rounded-xl object-cover" />
+        <img src={message.imageUrl} alt={content || 'Ảnh chat'} className="max-h-56 w-full rounded-xl object-cover" />
         {content ? <p className="whitespace-pre-wrap break-words">{content}</p> : null}
       </div>
     )
@@ -110,8 +110,8 @@ function MessageContent ({ message, mine, onAddProduct }) {
   if (message?.type === 'PRODUCT_LINK' || message?.linkUrl) {
     return (
       <div className={`space-y-2 rounded-xl p-2 ${mine ? 'bg-background/10' : 'bg-muted/60'}`}>
-        {message.productImageUrl ? <img src={message.productImageUrl} alt={message.productName || 'Sáº£n pháº©m'} className="max-h-40 w-full rounded-lg object-cover" /> : null}
-        <p className="font-semibold">{message.productName || 'Sáº£n pháº©m'}</p>
+        {message.productImageUrl ? <img src={message.productImageUrl} alt={message.productName || 'Sản phẩm'} className="max-h-40 w-full rounded-lg object-cover" /> : null}
+        <p className="font-semibold">{message.productName || 'Sản phẩm'}</p>
         {message.productPrice !== null && message.productPrice !== undefined ? <p className={mine ? 'text-background/70' : 'text-muted-foreground'}>{formatPrice(message.productPrice)}</p> : null}
         {content ? <p className="whitespace-pre-wrap break-words">{content}</p> : null}
         <button type="button" onClick={() => onAddProduct(message)} className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${mine ? 'bg-background text-foreground hover:bg-background/90' : 'bg-foreground text-background hover:bg-foreground/90'}`}>
@@ -384,14 +384,14 @@ export default function CustomerChatWidget () {
           </div>
           <div>
             <h2 className="text-sm font-semibold">{title}</h2>
-            {/* <p className="text-xs text-background/70">{roomId ? `Phong #${roomId.slice(0, 8)}` : 'Ket noi voi nhan vien tu van'}</p> */}
+            {/* <p className="text-xs text-background/70">{roomId ? `Phòng #${roomId.slice(0, 8)}` : 'Kết nối với nhân viên tư vấn'}</p> */}
           </div>
         </div>
         <button
           type="button"
           onClick={() => setIsOpen(false)}
           className="rounded-full p-2 text-background/80 transition-colors hover:bg-background/10 hover:text-background"
-          aria-label="Thu nho chat"
+          aria-label="Thu nhỏ chat"
         >
           <Minus className="h-4 w-4" />
         </button>
@@ -414,7 +414,7 @@ export default function CustomerChatWidget () {
                 <div className={`max-w-[82%] rounded-2xl px-3 py-2 text-sm ${mine ? 'bg-foreground text-background' : 'border border-border bg-background text-foreground'}`}>
                   <MessageContent message={message} mine={mine} onAddProduct={addProductFromMessage} />
                   <p className={`mt-1 text-[10px] ${mine ? 'text-background/65' : 'text-muted-foreground'}`}>
-                    {message.pending ? 'Dang gui' : toTime(messageTime(message))}
+                    {message.pending ? 'Đang gửi' : toTime(messageTime(message))}
                   </p>
                 </div>
               </div>
@@ -429,7 +429,7 @@ export default function CustomerChatWidget () {
         <div className="mb-2 flex flex-wrap items-center gap-2">
           <button type="button" onClick={() => selectMessageType('TEXT')} className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs transition-colors ${messageType === 'TEXT' ? 'border-foreground bg-foreground text-background' : 'border-border text-muted-foreground hover:text-foreground'}`}>
             <MessageCircle className="h-3 w-3" />
-            Text
+            Tin nhắn
           </button>
           <button type="button" onClick={() => selectMessageType('IMAGE')} className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs transition-colors ${messageType === 'IMAGE' ? 'border-foreground bg-foreground text-background' : 'border-border text-muted-foreground hover:text-foreground'}`}>
             <ImageIcon className="h-3 w-3" />
@@ -447,7 +447,7 @@ export default function CustomerChatWidget () {
         {messageType === 'IMAGE' ? (
           <div className="mb-2 space-y-2">
             <input type="file" accept="image/*" onChange={handleAttachmentFileChange} disabled={sending || isClosed} className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none transition-colors file:mr-3 file:rounded-full file:border-0 file:bg-foreground file:px-3 file:py-1 file:text-xs file:text-background focus:border-foreground disabled:bg-muted" />
-            {attachmentPreviewUrl ? <img src={attachmentPreviewUrl} alt="Preview" className="max-h-32 w-full rounded-xl object-cover" /> : null}
+            {attachmentPreviewUrl ? <img src={attachmentPreviewUrl} alt="Xem trước" className="max-h-32 w-full rounded-xl object-cover" /> : null}
           </div>
         ) : null}
         {messageType === 'VIDEO' ? (

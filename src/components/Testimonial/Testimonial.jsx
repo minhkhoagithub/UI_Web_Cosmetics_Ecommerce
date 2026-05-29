@@ -3,22 +3,22 @@ import { Quote, Star } from 'lucide-react';
 const testimonials = [
     {
         name: "Sarah Mitchell",
-        role: "Fashion Blogger",
-        text: "LUXORA's collection is absolutely stunning. The quality of their products exceeds expectations every single time. My go-to for luxury accessories.",
+        role: "Beauty Blogger",
+        text: "Bộ sưu tập của LUXORA rất chỉn chu. Chất lượng sản phẩm luôn vượt kỳ vọng và là lựa chọn yêu thích của tôi.",
         rating: 5,
         avatar: "SM",
     },
     {
         name: "James Rodriguez",
-        role: "Creative Director",
-        text: "I've been shopping here for over a year. The attention to detail in every product, from packaging to quality, is simply unmatched.",
+        role: "Giám đốc sáng tạo",
+        text: "Tôi đã mua sắm ở đây hơn một năm. Từng sản phẩm đều được chăm chút từ bao bì đến chất lượng.",
         rating: 5,
         avatar: "JR",
     },
     {
         name: "Emily Chen",
-        role: "Interior Designer",
-        text: "From their customer service to product quality, everything about LUXORA screams premium. Highly recommended for anyone who values quality.",
+        role: "Chuyên gia làm đẹp",
+        text: "Từ dịch vụ khách hàng đến chất lượng sản phẩm, LUXORA mang lại cảm giác rất cao cấp và đáng tin cậy.",
         rating: 5,
         avatar: "EC",
     },
@@ -29,8 +29,8 @@ const Testimonial = () => {
         <section className="bg-secondary/30 py-20">
             <div className="container mx-auto px-4">
                 <div className="text-center mb-14">
-                    <p className="font-body text-sm tracking-[0.3em] uppercase text-muted-foreground mb-3">What Our Clients Say</p>
-                    <h2 className="font-display text-3xl md:text-4xl font-semibold text-foreground">Trusted by Thousands</h2>
+                    <p className="font-body text-sm tracking-[0.3em] uppercase text-muted-foreground mb-3">Khách hàng nói gì</p>
+                    <h2 className="font-display text-3xl md:text-4xl font-semibold text-foreground">Được nhiều khách hàng tin chọn</h2>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

@@ -4,7 +4,7 @@ import { useCart } from '../../context/CartProvider'
 import { formatCurrency } from '../../utils/format'
 
 const CartSidebar = () => {
-  const { isCartOpen, setIsCartOpen, items, updateQuantity, removeFromCart, totalPrice, setIsCheckoutOpen, totalItems } = useCart()
+  const { isCartOpen, setIsCartOpen, items, updateQuantity, removeFromCart, totalPrice, setIsCheckoutOpen, cartItemCount } = useCart()
 
   return (
     <AnimatePresence>
@@ -26,7 +26,7 @@ const CartSidebar = () => {
             className="fixed right-0 top-0 z-50 flex h-full w-full flex-col bg-background shadow-2xl sm:w-[28rem]"
           >
             <div className="flex items-center justify-between border-b border-border p-6">
-              <h2 className="font-display text-xl font-semibold text-foreground">Shopping Bag ({totalItems})</h2>
+              <h2 className="font-display text-xl font-semibold text-foreground">Giỏ hàng ({cartItemCount})</h2>
               <button
                 type="button"
                 onClick={() => setIsCartOpen(false)}
@@ -40,7 +40,7 @@ const CartSidebar = () => {
               {items.length === 0 ? (
                 <div className="flex h-full flex-col items-center justify-center text-center">
                   <p className="mb-2 text-muted-foreground">Giỏ hàng của bạn đang trống</p>
-                  <p className="text-sm text-muted-foreground">Hãy thêm sản phẩm từ catalog backend để bắt đầu.</p>
+                  <p className="text-sm text-muted-foreground">Hãy thêm sản phẩm từ danh mục để bắt đầu.</p>
                 </div>
               ) : (
                 <AnimatePresence>
@@ -60,7 +60,10 @@ const CartSidebar = () => {
                       <div className="min-w-0 flex-1">
                         <h3 className="truncate text-sm font-medium text-foreground">{item.name}</h3>
                         <p className="mt-0.5 text-xs uppercase tracking-[0.18em] text-muted-foreground">{item.variantLabel}</p>
-                        <p className="mt-1 text-sm font-semibold text-foreground">{formatCurrency(item.price)}</p>
+                        <div className="mt-1 flex flex-wrap items-center gap-2">
+                          <p className={`text-sm font-semibold ${item.onPromotion ? 'text-rose-700' : 'text-foreground'}`}>{formatCurrency(item.price)}</p>
+                          {item.onPromotion ? <span className="text-xs text-muted-foreground line-through">{formatCurrency(item.originalPrice)}</span> : null}
+                        </div>
 
                         <div className="mt-2 flex items-center gap-3">
                           <div className="flex items-center border border-border">
@@ -113,7 +116,7 @@ const CartSidebar = () => {
                   }}
                   className="flex w-full items-center justify-center gap-2 bg-foreground py-4 text-sm uppercase tracking-widest text-background transition-colors duration-300 hover:bg-accent hover:text-accent-foreground"
                 >
-                  Checkout
+                  Thanh toán
                   <ArrowRight size={16} />
                 </motion.button>
               </div>

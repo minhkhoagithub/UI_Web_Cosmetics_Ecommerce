@@ -4,7 +4,20 @@ import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { useCart } from '../../context/CartProvider'
 import { getProductDetail, mapProductDetailToSelection, rememberRecentProduct } from '../../services/catalog'
+import { getActiveProductPromotionsRequest } from '../../services/promotion'
+import { getProductReviewsRequest } from '../../services/review'
 import { formatCurrency, formatRating } from '../../utils/format'
+
+const semanticTextOf = (item) => {
+  const name = String(item?.name ?? '').trim()
+  const code = String(item?.code ?? '').trim()
+
+  if (name && code && !name.toLowerCase().includes(code.toLowerCase())) {
+    return `${name} (${code})`
+  }
+
+  return name || code
+}
 
 const ProductDetailsModal = ({ product, onClose }) => {
   const { addToCart } = useCart()
@@ -13,6 +26,9 @@ const ProductDetailsModal = ({ product, onClose }) => {
   const [quantity, setQuantity] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+  const [reviews, setReviews] = useState([])
+  const [isLoadingReviews, setIsLoadingReviews] = useState(false)
+  const [hasLoadedReviews, setHasLoadedReviews] = useState(false)
 
   useEffect(() => {
     if (!product?.productId) {
@@ -25,17 +41,28 @@ const ProductDetailsModal = ({ product, onClose }) => {
       setIsLoading(true)
       setErrorMessage('')
       setQuantity(1)
+      setReviews([])
+      setHasLoadedReviews(false)
 
       try {
-        const detail = await getProductDetail(product.productId)
+        setIsLoadingReviews(true)
+
+        const [detail, nextReviews, activePromotions] = await Promise.all([
+          getProductDetail(product.productId),
+          getProductReviewsRequest(product.productId),
+          getActiveProductPromotionsRequest().catch(() => product.productPromotions ?? []),
+        ])
+
         if (!isSubscribed) {
           return
         }
 
-        const resolvedProduct = mapProductDetailToSelection(detail, product)
+        const resolvedProduct = mapProductDetailToSelection(detail, product, activePromotions)
         setDetailProduct(resolvedProduct)
         setSelectedVariantId(resolvedProduct.variants[0]?.id ?? '')
         rememberRecentProduct(resolvedProduct)
+        setReviews(Array.isArray(nextReviews) ? nextReviews : [])
+        setHasLoadedReviews(true)
       } catch (error) {
         if (isSubscribed) {
           setErrorMessage(error.message)
@@ -43,6 +70,7 @@ const ProductDetailsModal = ({ product, onClose }) => {
       } finally {
         if (isSubscribed) {
           setIsLoading(false)
+          setIsLoadingReviews(false)
         }
       }
     }
@@ -54,26 +82,63 @@ const ProductDetailsModal = ({ product, onClose }) => {
     }
   }, [product])
 
+  const reviewStats = useMemo(() => {
+    if (!hasLoadedReviews) {
+      return null
+    }
+
+    if (reviews.length === 0) {
+      return {
+        averageRating: 0,
+        reviewCount: 0,
+      }
+    }
+
+    const totalRating = reviews.reduce((sum, review) => sum + Number(review.rating ?? 0), 0)
+    return {
+      averageRating: totalRating / reviews.length,
+      reviewCount: reviews.length,
+    }
+  }, [hasLoadedReviews, reviews])
+
   const selectedVariant = useMemo(
     () => detailProduct?.variants.find((variant) => variant.id === selectedVariantId) ?? null,
     [detailProduct?.variants, selectedVariantId],
   )
 
+  const displayedRating = reviewStats ? reviewStats.averageRating : detailProduct?.rating ?? 0
+  const displayedReviewCount = reviewStats ? reviewStats.reviewCount : detailProduct?.reviews ?? 0
   const maxAllowedQuantity = Math.max(1, Number(selectedVariant?.stockQuantity ?? 1))
+  const selectedDisplayPrice =
+    selectedVariant?.discountedPrice ??
+    selectedVariant?.price ??
+    detailProduct?.variants?.[0]?.discountedPrice ??
+    detailProduct?.variants?.[0]?.price ??
+    0
+  const detailAttributeGroups = useMemo(
+    () =>
+      [
+        { key: 'ingredients', title: 'Thành phần', items: detailProduct?.ingredients ?? [] },
+        { key: 'skinTypes', title: 'Loại da phù hợp', items: detailProduct?.skinTypes ?? [] },
+        { key: 'concerns', title: 'Vấn đề da', items: detailProduct?.concerns ?? [] },
+        { key: 'tags', title: 'Nhãn', items: detailProduct?.tags ?? [] },
+      ].filter((group) => group.items.length > 0),
+    [detailProduct],
+  )
 
   const handleAdd = () => {
     if (!detailProduct || !selectedVariant) {
-      toast.error('San pham hien chua san sang de them vao gio hang.')
+      toast.error('Sản phẩm hiện chưa sẵn sàng để thêm vào giỏ hàng.')
       return
     }
 
     if (selectedVariant.stockQuantity <= 0) {
-      toast.error('Bien the nay hien da het hang.')
+      toast.error('Biến thể này hiện đã hết hàng.')
       return
     }
 
     addToCart(detailProduct, selectedVariant, quantity)
-    toast.success('Da them san pham vao gio hang.')
+    toast.success('Đã thêm sản phẩm vào giỏ hàng.')
     setQuantity(1)
     onClose()
   }
@@ -120,7 +185,7 @@ const ProductDetailsModal = ({ product, onClose }) => {
                 />
               ) : (
                 <div className="flex h-72 w-full items-center justify-center bg-secondary text-sm uppercase tracking-[0.28em] text-muted-foreground md:h-full">
-                  No Preview
+                  Chưa có ảnh
                 </div>
               )}
               <button type="button" className="absolute left-4 top-4 rounded-full bg-background/90 p-3 backdrop-blur-sm">
@@ -129,7 +194,10 @@ const ProductDetailsModal = ({ product, onClose }) => {
             </div>
 
             <div className="flex flex-1 flex-col overflow-y-auto p-6 md:p-8">
-              <p className="mb-2 text-xs uppercase tracking-[0.28em] text-muted-foreground">{detailProduct.category}</p>
+              <p className="mb-2 text-xs uppercase tracking-[0.28em] text-muted-foreground">
+                {detailProduct.category}
+                {detailProduct.brandName ? ` / ${detailProduct.brandName}` : ''}
+              </p>
               <h2 className="font-display text-2xl font-semibold text-foreground md:text-3xl">{detailProduct.name}</h2>
 
               <div className="mb-4 mt-3 flex items-center gap-2">
@@ -137,25 +205,51 @@ const ProductDetailsModal = ({ product, onClose }) => {
                   <Star size={14} fill="currentColor" />
                 </div>
                 <span className="text-sm text-muted-foreground">
-                  {formatRating(detailProduct.rating)} - {detailProduct.reviews} danh gia
+                  {formatRating(displayedRating)} - {displayedReviewCount} đánh giá
                 </span>
               </div>
 
               <div className="mb-6 flex items-center gap-3">
-                <span className="font-display text-3xl font-semibold text-foreground">
-                  {formatCurrency(selectedVariant?.price ?? detailProduct.variants[0]?.price ?? 0)}
+                <span className={`font-display text-3xl font-semibold ${selectedVariant?.onPromotion ? 'text-rose-700' : 'text-foreground'}`}>
+                  {formatCurrency(selectedDisplayPrice)}
                 </span>
-                {selectedVariant ? (
-                  <span className="text-sm text-muted-foreground">Kho con {selectedVariant.stockQuantity}</span>
+                {selectedVariant?.onPromotion ? (
+                  <>
+                    <span className="rounded-full bg-rose-600 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">{selectedVariant.promotionLabel || 'Khuyến mãi'}</span>
+                    <span className="text-sm text-muted-foreground line-through">{formatCurrency(selectedVariant.originalPrice ?? selectedVariant.price)}</span>
+                  </>
                 ) : null}
+                {/* {selectedVariant ? (
+                  <span className="text-sm text-muted-foreground">Kho còn {selectedVariant.stockQuantity}</span>
+                ) : null} */}
               </div>
 
               <p className="mb-6 text-sm leading-7 text-muted-foreground">
-                {detailProduct.description || 'San pham da duoc dong bo tu backend. Hay chon bien the phu hop truoc khi them vao gio.'}
+                {detailProduct.description || 'Sản phẩm đã được đồng bộ từ backend. Hãy chọn biến thể phù hợp trước khi thêm vào giỏ.'}
               </p>
 
+              {detailAttributeGroups.length > 0 ? (
+                <div className="mb-6 grid gap-3 sm:grid-cols-2">
+                  {detailAttributeGroups.map((group) => (
+                    <section key={group.key} className="rounded-3xl border border-border bg-secondary/45 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">{group.title}</p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {group.items.map((item) => (
+                          <span
+                            key={item.id || `${group.key}-${semanticTextOf(item)}`}
+                            className="rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-foreground"
+                          >
+                            {semanticTextOf(item)}
+                          </span>
+                        ))}
+                      </div>
+                    </section>
+                  ))}
+                </div>
+              ) : null}
+
               <div className="mb-6">
-                <p className="mb-3 text-xs uppercase tracking-[0.28em] text-muted-foreground">Bien the kha dung</p>
+                <p className="mb-3 text-xs uppercase tracking-[0.28em] text-muted-foreground">Dung lượng khả dụng</p>
                 <div className="grid gap-3">
                   {detailProduct.variants.map((variant) => (
                     <button
@@ -169,17 +263,60 @@ const ProductDetailsModal = ({ product, onClose }) => {
                       }`}
                     >
                       <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <p className="font-semibold text-foreground">{variant.label}</p>
-                          <p className="mt-1 text-sm text-muted-foreground">SKU: {variant.sku || 'N/A'}</p>
-                        </div>
+                        <p className="font-semibold text-foreground">{variant.label}</p>
                         <div className="text-right">
-                          <p className="font-semibold text-foreground">{formatCurrency(variant.price)}</p>
-                          <p className="mt-1 text-xs text-muted-foreground">Ton kho {variant.stockQuantity}</p>
+                          <p className={`font-semibold ${variant.onPromotion ? 'text-rose-700' : 'text-foreground'}`}>{formatCurrency(variant.discountedPrice ?? variant.price)}</p>
+                          {variant.onPromotion ? <p className="text-xs text-muted-foreground line-through">{formatCurrency(variant.originalPrice ?? variant.price)}</p> : null}
                         </div>
                       </div>
                     </button>
                   ))}
+                </div>
+              </div>
+
+              <div className="mb-8 border-t border-border pt-6">
+                <p className="text-xs uppercase tracking-[0.28em] text-muted-foreground">Đánh giá người dùng</p>
+
+                <div className="mt-6">
+                  {isLoadingReviews ? (
+                    <div className="flex items-center gap-3 rounded-[1.75rem] border border-border bg-background px-5 py-5 text-sm text-muted-foreground">
+                      <LoaderCircle size={18} className="animate-spin" />
+                      Đang tải đánh giá mới nhất...
+                    </div>
+                  ) : reviews.length > 0 ? (
+                    <div className="space-y-4">
+                      {reviews.map((review) => (
+                        <article key={review.id} className="rounded-[1.75rem] border border-border bg-background px-5 py-5">
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                            <div>
+                              <p className="font-semibold text-foreground">{review.reviewerName || 'Khách hàng'}</p>
+                              <div className="mt-2 flex items-center gap-1 text-accent">
+                                {[1, 2, 3, 4, 5].map((starValue) => (
+                                  <Star
+                                    key={starValue}
+                                    size={14}
+                                    fill={starValue <= Number(review.rating ?? 0) ? 'currentColor' : 'none'}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+
+                            <p className="text-sm text-muted-foreground">
+                              {review.createdAt ? new Date(review.createdAt).toLocaleString('vi-VN') : ''}
+                            </p>
+                          </div>
+
+                          {review.content?.trim() ? (
+                            <p className="mt-4 text-sm leading-7 text-muted-foreground">{review.content.trim()}</p>
+                          ) : null}
+                        </article>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="rounded-[1.75rem] border border-dashed border-border bg-background px-5 py-6 text-sm leading-7 text-muted-foreground">
+                      Chưa có đánh giá người dùng nào cho sản phẩm này.
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -215,7 +352,7 @@ const ProductDetailsModal = ({ product, onClose }) => {
                   }`}
                 >
                   <ShoppingBag size={16} />
-                  Them vao gio
+                  Thêm vào giỏ
                 </Motion.button>
               </div>
             </div>

@@ -110,7 +110,7 @@ export const apiRequest = async (
     auth = true,
     userId,
   } = {},
-  fallbackMessage = 'Yeu cau khong thanh cong. Vui long thu lai.',
+  fallbackMessage = 'Yêu cầu không thành công. Vui lòng thử lại.',
 ) => {
   const session = getStoredAuthSession()
   const resolvedHeaders = {
