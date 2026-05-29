@@ -62,7 +62,7 @@ const buildEmptyAddressForm = (profile) => ({
 
 const formatRoleLabel = (role) => {
   if (!role) {
-    return 'Chua cap nhat'
+    return 'Chưa cập nhật'
   }
 
   return role
@@ -138,7 +138,7 @@ const mapAddressToForm = (address) => ({
 
 const isExpectedEmailOtpMessage = (message) =>
   typeof message === 'string' &&
-  (message.includes('OTP gui den email cu') || message.includes('Yeu cau doi email da duoc ghi nhan'))
+  (message.includes('OTP gửi đến email cũ') || message.includes('Yêu cầu đổi email đã được ghi nhận'))
 
 const Profile = () => {
   const { isAuthenticated, user, syncUser } = useAuth()
@@ -185,7 +185,7 @@ const Profile = () => {
     const nextUserId = user?.userId
 
     if (!nextUserId) {
-      setLoadErrorMessage('Khong the xac dinh tai khoan hien tai.')
+      setLoadErrorMessage('Không thể xác định tài khoản hiện tại.')
       setIsLoading(false)
       return
     }
@@ -247,7 +247,7 @@ const Profile = () => {
 
   const ensureActiveUserId = () => {
     if (!activeUserId) {
-      toast.error('Khong the xac dinh tai khoan hien tai.')
+      toast.error('Không thể xác định tài khoản hiện tại.')
       return null
     }
 
@@ -299,7 +299,7 @@ const Profile = () => {
     }
 
     if (!selectedFile.type.startsWith('image/')) {
-      toast.error('Vui long chon mot tep hinh anh hop le.')
+      toast.error('Vui lòng chọn một tệp hình ảnh hợp lệ.')
       event.target.value = ''
       return
     }
@@ -316,7 +316,7 @@ const Profile = () => {
     }
 
     reader.onerror = () => {
-      toast.error('Khong the doc tep hinh anh da chon.')
+      toast.error('Không thể đọc tệp hình ảnh đã chọn.')
     }
 
     reader.readAsDataURL(selectedFile)
@@ -336,7 +336,7 @@ const Profile = () => {
       })
 
       const nextProfile = applyProfileResponse(response)
-      toast.success('Thong tin ca nhan da duoc cap nhat.')
+      toast.success('Thông tin cá nhân đã được cập nhật.')
 
       if (!editingAddressId) {
         setAddressForm((currentForm) => ({
@@ -358,12 +358,12 @@ const Profile = () => {
     const normalizedEmail = emailDraft.trim()
 
     if (!normalizedEmail) {
-      toast.error('Vui long nhap email moi.')
+      toast.error('Vui lòng nhập email mới.')
       return
     }
 
     if (normalizedEmail === profile.email) {
-      toast.info('Email moi dang trung voi email hien tai.')
+      toast.info('Email mới đang trùng với email hiện tại.')
       return
     }
 
@@ -399,7 +399,7 @@ const Profile = () => {
     event.preventDefault()
 
     if (!pendingEmail) {
-      toast.error('Khong tim thay email dang cho xac thuc.')
+      toast.error('Không tìm thấy email đang chờ xác thực.')
       return
     }
 
@@ -413,7 +413,7 @@ const Profile = () => {
 
       setEmailFlowStage('verify-new')
       setOldEmailOtp('')
-      toast.success(response?.message ?? 'OTP da duoc gui toi email moi.')
+      toast.success(response?.message ?? 'OTP đã được gửi tới email mới.')
     } catch (error) {
       toast.error(error.message)
     } finally {
@@ -425,7 +425,7 @@ const Profile = () => {
     event.preventDefault()
 
     if (!pendingEmail) {
-      toast.error('Khong tim thay email moi dang cho xac thuc.')
+      toast.error('Không tìm thấy email mới đang chờ xác thực.')
       return
     }
 
@@ -442,7 +442,7 @@ const Profile = () => {
       setOldEmailOtp('')
       setNewEmailOtp('')
       setEmailFlowStage('idle')
-      toast.success('Email da duoc cap nhat thanh cong.')
+      toast.success('Email đã được cập nhật thành công.')
     } catch (error) {
       toast.error(error.message)
     } finally {
@@ -494,7 +494,7 @@ const Profile = () => {
 
       setAddresses((currentAddresses) => upsertAddress(currentAddresses, response))
       resetAddressEditor()
-      toast.success(editingAddressId ? 'Dia chi giao hang da duoc cap nhat.' : 'Da them dia chi giao hang moi.')
+      toast.success(editingAddressId ? 'Địa chỉ giao hàng đã được cập nhật.' : 'Đã thêm địa chỉ giao hàng mới.')
     } catch (error) {
       toast.error(error.message)
     } finally {
@@ -524,7 +524,7 @@ const Profile = () => {
         resetAddressEditor()
       }
 
-      toast.success('Dia chi giao hang da duoc xoa.')
+      toast.success('Địa chỉ giao hàng đã được xóa.')
     } catch (error) {
       toast.error(error.message)
     } finally {
@@ -554,7 +554,7 @@ const Profile = () => {
       })
 
       setAddresses((currentAddresses) => upsertAddress(currentAddresses, response))
-      toast.success('Da dat dia chi mac dinh cho giao hang.')
+      toast.success('Đã đặt địa chỉ mặc định cho giao hàng.')
     } catch (error) {
       toast.error(error.message)
     } finally {
@@ -576,7 +576,7 @@ const Profile = () => {
             <div className="relative grid gap-6 p-6 md:p-8 lg:grid-cols-[1.15fr_0.85fr] lg:p-10">
               <div className="space-y-6">
                 <div className="inline-flex items-center rounded-full border border-border bg-secondary/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-secondary-foreground">
-                  Profile Studio
+                  Hồ sơ cá nhân
                 </div>
 
                 <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
@@ -590,60 +590,55 @@ const Profile = () => {
 
                   <div className="space-y-3">
                     <div>
-                      <p className="text-sm uppercase tracking-[0.24em] text-muted-foreground">Khong gian ca nhan</p>
+                      <p className="text-sm uppercase tracking-[0.24em] text-muted-foreground">Không gian cá nhân</p>
                       <h1 className="mt-2 font-display text-3xl font-semibold text-foreground md:text-4xl">
-                        {profile.fullName?.trim() || 'Khach hang'}
+                        {profile.fullName?.trim() || 'Khách hàng'}
                       </h1>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-3">
                       <span className="rounded-full bg-secondary px-4 py-2 text-sm text-secondary-foreground">
-                        {profile.email || 'Chua co email'}
+                        {profile.email || 'Chưa có email'}
                       </span>
                       <span
                         className={`rounded-full px-4 py-2 text-sm font-semibold ${
                           profile.isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
                         }`}
                       >
-                        {profile.isActive ? 'Dang hoat dong' : 'Tam khoa'}
+                        {profile.isActive ? 'Đang hoạt động' : 'Tạm khóa'}
                       </span>
                     </div>
                   </div>
                 </div>
-
-                <p className="max-w-2xl text-sm leading-7 text-muted-foreground md:text-base">
-                  Ban co the cap nhat thong tin ca nhan, doi email theo luong OTP cua backend, chon anh dai dien va quan
-                  ly dia chi giao hang ngay trong trang nay.
-                </p>
               </div>
 
               <aside className="rounded-[2.25rem] border border-border bg-secondary/55 p-6">
-                <p className={sectionTitleClassName}>Tong quan tai khoan</p>
+                <p className={sectionTitleClassName}>Tổng quan tài khoản</p>
 
                 <div className="mt-5 space-y-4">
                   <div className="rounded-[1.75rem] bg-background p-5">
-                    <p className="text-sm text-muted-foreground">Ma nguoi dung</p>
-                    <p className="mt-2 break-all font-semibold text-foreground">{profile.id || 'Chua dong bo'}</p>
+                    <p className="text-sm text-muted-foreground">Mã người dùng</p>
+                    <p className="mt-2 break-all font-semibold text-foreground">{profile.id || 'Chưa đồng bộ'}</p>
                   </div>
 
                   <div className="rounded-[1.75rem] bg-background p-5">
-                    <p className="text-sm text-muted-foreground">Vai tro</p>
+                    <p className="text-sm text-muted-foreground">Vai trò</p>
                     <p className="mt-2 font-semibold text-foreground">{formatRoleLabel(profile.role)}</p>
                   </div>
 
                   <div className="rounded-[1.75rem] bg-background p-5">
-                    <p className="text-sm text-muted-foreground">Dong bo backend</p>
+                    <p className="text-sm text-muted-foreground">Đồng bộ dữ liệu</p>
                     <div className="mt-3 flex items-center gap-3">
                       {isLoading ? (
                         <>
                           <LoaderCircle size={18} className="animate-spin text-foreground" />
-                          <span className="text-sm font-medium text-foreground">Dang tai du lieu</span>
+                          <span className="text-sm font-medium text-foreground">Đang tải dữ liệu</span>
                         </>
                       ) : (
                         <>
                           <ShieldCheck size={18} className="text-emerald-600" />
                           <span className="text-sm font-medium text-foreground">
-                            {loadErrorMessage ? 'Dang dung du lieu kha dung nhat' : 'Da dong bo thanh cong'}
+                            {loadErrorMessage ? 'Đang dùng dữ liệu khả dụng nhất' : 'Đã đồng bộ thành công'}
                           </span>
                         </>
                       )}
@@ -652,7 +647,7 @@ const Profile = () => {
 
                   {loadErrorMessage ? (
                     <div className="rounded-[1.75rem] border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-800">
-                      Khong the tai day du profile luc nay: {loadErrorMessage}
+                      Không thể tải đầy đủ profile lúc này: {loadErrorMessage}
                     </div>
                   ) : null}
                 </div>
@@ -663,57 +658,57 @@ const Profile = () => {
           <div className="mt-8 grid gap-6 lg:grid-cols-[1.08fr_0.92fr]">
             <section className={`${cardClassName} space-y-6`}>
               <div>
-                <p className={sectionTitleClassName}>Thong tin ca nhan</p>
-                <h2 className="mt-2 font-display text-2xl font-semibold text-foreground">Cap nhat ho so co ban</h2>
+                <p className={sectionTitleClassName}>Thông tin cá nhân</p>
+                <h2 className="mt-2 font-display text-2xl font-semibold text-foreground">Cập nhật hồ sơ</h2>
               </div>
 
               <form onSubmit={handleProfileSubmit} className="space-y-5">
                 <div className="grid gap-4 md:grid-cols-2">
                   <label className="space-y-2 md:col-span-2">
-                    <span className="text-sm font-medium text-foreground">Ho va ten</span>
+                    <span className="text-sm font-medium text-foreground">Họ và tên</span>
                     <input
                       name="fullName"
                       value={profileForm.fullName}
                       onChange={handleProfileFieldChange}
                       className={inputClassName}
-                      placeholder="Nhap ho va ten"
+                      placeholder="Nhập họ và tên"
                       required
                     />
                   </label>
 
                   <label className="space-y-2">
-                    <span className="text-sm font-medium text-foreground">So dien thoai</span>
+                    <span className="text-sm font-medium text-foreground">Số điện thoại</span>
                     <input
                       name="phone"
                       value={profileForm.phone}
                       onChange={handleProfileFieldChange}
                       className={inputClassName}
-                      placeholder="Nhap so dien thoai"
+                      placeholder="Nhập số điện thoại"
                       required
                     />
                   </label>
 
                   <label className="space-y-2">
-                    <span className="text-sm font-medium text-foreground">Email hien tai</span>
+                    <span className="text-sm font-medium text-foreground">Email hiện tại</span>
                     <input value={profile.email} className={`${inputClassName} bg-secondary/60`} disabled />
                   </label>
 
                   <label className="space-y-2 md:col-span-2">
-                    <span className="text-sm font-medium text-foreground">Lien ket anh dai dien</span>
+                    <span className="text-sm font-medium text-foreground">Liên kết ảnh đại diện</span>
                     <input
                       name="avatarUrl"
                       value={profileForm.avatarUrl}
                       onChange={handleProfileFieldChange}
                       className={inputClassName}
-                      placeholder="Dan URL anh hoac chon anh tu may"
+                      placeholder="Dán URL ảnh hoặc chọn ảnh từ máy"
                     />
                   </label>
 
                   <label className="space-y-2 md:col-span-2">
-                    <span className="text-sm font-medium text-foreground">Tai anh tu may</span>
+                    <span className="text-sm font-medium text-foreground">Tải ảnh từ máy</span>
                     <label className="flex cursor-pointer items-center justify-center gap-3 rounded-2xl border border-dashed border-border bg-secondary/45 px-4 py-4 text-sm text-secondary-foreground transition-colors hover:border-foreground/50 hover:bg-secondary">
                       <Camera size={18} />
-                      <span>Chon tep hinh anh de tao preview va gui len backend</span>
+                      <span>Chọn tệp hình ảnh để tải lên</span>
                       <input type="file" accept="image/*" onChange={handleAvatarFileChange} className="hidden" />
                     </label>
                   </label>
@@ -729,32 +724,32 @@ const Profile = () => {
                   }`}
                 >
                   {isProfileSaving ? <LoaderCircle size={16} className="animate-spin" /> : <Check size={16} />}
-                  {isProfileSaving ? 'Dang luu' : 'Luu thong tin'}
+                  {isProfileSaving ? 'Đang lưu' : 'Lưu thông tin'}
                 </button>
               </form>
             </section>
 
             <section className={`${cardClassName} space-y-6`}>
               <div>
-                <p className={sectionTitleClassName}>Doi email</p>
-                <h2 className="mt-2 font-display text-2xl font-semibold text-foreground">Bao ve bang OTP hai buoc</h2>
+                <p className={sectionTitleClassName}>Đổi email</p>
+                <h2 className="mt-2 font-display text-2xl font-semibold text-foreground">Bảo vệ bằng OTP hai bước</h2>
               </div>
 
               <form onSubmit={handleEmailChangeStart} className="space-y-4">
                 <label className="space-y-2">
-                  <span className="text-sm font-medium text-foreground">Email moi</span>
+                  <span className="text-sm font-medium text-foreground">Email mới</span>
                   <input
                     value={emailDraft}
                     onChange={(event) => setEmailDraft(event.target.value)}
                     className={inputClassName}
-                    placeholder="Nhap email moi"
+                    placeholder="Nhập email mới"
                     type="email"
                     required
                   />
                 </label>
 
                 <div className="rounded-[1.75rem] border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-800">
-                  Backend hien yeu cau 2 buoc: gui OTP den email cu truoc, sau do xac thuc OTP tai email moi de hoan tat.
+                  Hệ thống hiện yêu cầu 2 bước: gửi OTP đến email cũ trước, sau đó xác thực OTP tại email mới để hoàn tất.
                 </div>
 
                 <button
@@ -767,7 +762,7 @@ const Profile = () => {
                   }`}
                 >
                   {isEmailSubmitting ? <LoaderCircle size={16} className="animate-spin" /> : <Mail size={16} />}
-                  {isEmailSubmitting ? 'Dang xu ly' : 'Bat dau doi email'}
+                  {isEmailSubmitting ? 'Đang xử lý' : 'Bắt đầu đổi email'}
                 </button>
               </form>
 
@@ -776,20 +771,20 @@ const Profile = () => {
                   <div className="flex items-start gap-3 text-sm leading-6 text-secondary-foreground">
                     <AlertCircle size={18} className="mt-0.5 shrink-0" />
                     <p>
-                      Dang doi email sang <span className="font-semibold">{pendingEmail}</span>. Hoan thanh lan luot 2 buoc
-                      xac thuc ben duoi.
+                      Đang đổi email sang <span className="font-semibold">{pendingEmail}</span>. Hoàn thành lần lượt 2 bước
+                      xác thực bên dưới.
                     </p>
                   </div>
 
                   {emailFlowStage === 'verify-old' ? (
                     <form onSubmit={handleConfirmOldEmailOtp} className="space-y-4">
                       <label className="space-y-2">
-                        <span className="text-sm font-medium text-foreground">OTP gui den email cu</span>
+                        <span className="text-sm font-medium text-foreground">OTP gửi đến email cũ</span>
                         <input
                           value={oldEmailOtp}
                           onChange={(event) => setOldEmailOtp(event.target.value)}
                           className={inputClassName}
-                          placeholder="Nhap OTP email cu"
+                          placeholder="Nhập OTP email cũ"
                           required
                         />
                       </label>
@@ -805,7 +800,7 @@ const Profile = () => {
                           }`}
                         >
                           {isEmailSubmitting ? <LoaderCircle size={16} className="animate-spin" /> : <Check size={16} />}
-                          Xac thuc email cu
+                          Xác thực email cũ
                         </button>
 
                         <button
@@ -813,7 +808,7 @@ const Profile = () => {
                           onClick={handleCancelEmailFlow}
                           className="inline-flex items-center justify-center rounded-full border border-border px-5 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-foreground transition hover:border-foreground"
                         >
-                          Huy
+                          Hủy
                         </button>
                       </div>
                     </form>
@@ -822,12 +817,12 @@ const Profile = () => {
                   {emailFlowStage === 'verify-new' ? (
                     <form onSubmit={handleConfirmNewEmailOtp} className="space-y-4">
                       <label className="space-y-2">
-                        <span className="text-sm font-medium text-foreground">OTP gui den email moi</span>
+                        <span className="text-sm font-medium text-foreground">OTP gửi đến email mới</span>
                         <input
                           value={newEmailOtp}
                           onChange={(event) => setNewEmailOtp(event.target.value)}
                           className={inputClassName}
-                          placeholder="Nhap OTP email moi"
+                          placeholder="Nhập OTP email mới"
                           required
                         />
                       </label>
@@ -843,7 +838,7 @@ const Profile = () => {
                           }`}
                         >
                           {isEmailSubmitting ? <LoaderCircle size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
-                          Hoan tat doi email
+                          Hoàn tất đổi email
                         </button>
 
                         <button
@@ -851,7 +846,7 @@ const Profile = () => {
                           onClick={handleCancelEmailFlow}
                           className="inline-flex items-center justify-center rounded-full border border-border px-5 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-foreground transition hover:border-foreground"
                         >
-                          Huy
+                          Hủy
                         </button>
                       </div>
                     </form>
@@ -864,12 +859,12 @@ const Profile = () => {
           <section className={`${cardClassName} mt-8 space-y-6`}>
             <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <p className={sectionTitleClassName}>Dia chi giao hang</p>
-                <h2 className="mt-2 font-display text-2xl font-semibold text-foreground">Quan ly dia chi va mac dinh giao hang</h2>
+                <p className={sectionTitleClassName}>Địa chỉ giao hàng</p>
+                <h2 className="mt-2 font-display text-2xl font-semibold text-foreground">Quản lý địa chỉ và mặc định giao hàng</h2>
               </div>
 
               <div className="rounded-[1.5rem] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800">
-                BE hien chua co API GET dia chi, nen danh sach ben duoi duoc cache tren FE sau khi ban them, sua hoac xoa trong phien nay.
+                BE hiện chưa có API GET địa chỉ, nên danh sách bên dưới được cache trên FE sau khi bạn thêm, sửa hoặc xóa trong phiên này.
               </div>
             </div>
 
@@ -877,8 +872,8 @@ const Profile = () => {
               <div className="space-y-4">
                 {addresses.length === 0 ? (
                   <div className="rounded-[1.75rem] border border-dashed border-border bg-secondary/35 p-6 text-sm leading-7 text-muted-foreground">
-                    Chua co dia chi giao hang nao duoc dong bo trong trinh duyet nay. Sau khi ban them moi, danh sach se hien o day
-                    va co the tiep tuc sua, xoa hoac dat lam mac dinh.
+                    Chưa có địa chỉ giao hàng nào được đồng bộ trong trình duyệt này. Sau khi bạn thêm mới, danh sách sẽ hiện ở đây
+                    và có thể tiếp tục sửa, xóa hoặc đặt làm mặc định.
                   </div>
                 ) : (
                   addresses.map((address) => (
@@ -889,7 +884,7 @@ const Profile = () => {
                             <h3 className="font-semibold text-foreground">{address.fullName}</h3>
                             {address.isDefault ? (
                               <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
-                                Mac dinh
+                                Mặc định
                               </span>
                             ) : null}
                           </div>
@@ -908,7 +903,7 @@ const Profile = () => {
                               disabled={isAddressSubmitting}
                               className="inline-flex items-center justify-center rounded-full border border-border px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-foreground transition hover:border-foreground"
                             >
-                              Dat mac dinh
+                              Đặt mặc định
                             </button>
                           ) : null}
 
@@ -918,7 +913,7 @@ const Profile = () => {
                             className="inline-flex items-center justify-center gap-2 rounded-full border border-border px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-foreground transition hover:border-foreground"
                           >
                             <Pencil size={14} />
-                            Sua
+                            Sửa
                           </button>
 
                           <button
@@ -928,7 +923,7 @@ const Profile = () => {
                             className="inline-flex items-center justify-center gap-2 rounded-full border border-rose-200 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-rose-700 transition hover:border-rose-400"
                           >
                             <Trash2 size={14} />
-                            Xoa
+                            Xóa
                           </button>
                         </div>
                       </div>
@@ -939,81 +934,81 @@ const Profile = () => {
 
               <form onSubmit={handleAddressSubmit} className="space-y-5 rounded-[1.9rem] border border-border bg-background p-5">
                 <div>
-                  <p className={sectionTitleClassName}>{editingAddressId ? 'Cap nhat dia chi' : 'Them dia chi moi'}</p>
+                  <p className={sectionTitleClassName}>{editingAddressId ? 'Cập nhật địa chỉ' : 'Thêm địa chỉ mới'}</p>
                   <h3 className="mt-2 font-display text-xl font-semibold text-foreground">
-                    {editingAddressId ? 'Chinh sua dia chi giao hang' : 'Nhap dia chi giao hang'}
+                    {editingAddressId ? 'Chỉnh sửa địa chỉ giao hàng' : 'Nhập địa chỉ giao hàng'}
                   </h3>
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
                   <label className="space-y-2 md:col-span-2">
-                    <span className="text-sm font-medium text-foreground">Nguoi nhan</span>
+                    <span className="text-sm font-medium text-foreground">Người nhận</span>
                     <input
                       name="receiverName"
                       value={addressForm.receiverName}
                       onChange={handleAddressFieldChange}
                       className={inputClassName}
-                      placeholder="Nhap ten nguoi nhan"
+                      placeholder="Nhập tên người nhận"
                       required
                     />
                   </label>
 
                   <label className="space-y-2">
-                    <span className="text-sm font-medium text-foreground">So dien thoai</span>
+                    <span className="text-sm font-medium text-foreground">Số điện thoại</span>
                     <input
                       name="phone"
                       value={addressForm.phone}
                       onChange={handleAddressFieldChange}
                       className={inputClassName}
-                      placeholder="Nhap so dien thoai"
+                      placeholder="Nhập số điện thoại"
                       required
                     />
                   </label>
 
                   <label className="space-y-2">
-                    <span className="text-sm font-medium text-foreground">Tinh / Thanh pho</span>
+                    <span className="text-sm font-medium text-foreground">Tỉnh / Thành phố</span>
                     <input
                       name="city"
                       value={addressForm.city}
                       onChange={handleAddressFieldChange}
                       className={inputClassName}
-                      placeholder="Nhap tinh / thanh pho"
+                      placeholder="Nhập tỉnh / thành phố"
                       required
                     />
                   </label>
 
                   <label className="space-y-2">
-                    <span className="text-sm font-medium text-foreground">Quan / Huyen</span>
+                    <span className="text-sm font-medium text-foreground">Quận / Huyện</span>
                     <input
                       name="district"
                       value={addressForm.district}
                       onChange={handleAddressFieldChange}
                       className={inputClassName}
-                      placeholder="Nhap quan / huyen"
+                      placeholder="Nhập quận / huyện"
                       required
                     />
                   </label>
 
                   <label className="space-y-2">
-                    <span className="text-sm font-medium text-foreground">Phuong / Xa</span>
+                    <span className="text-sm font-medium text-foreground">Phường / Xã</span>
                     <input
                       name="ward"
                       value={addressForm.ward}
                       onChange={handleAddressFieldChange}
                       className={inputClassName}
-                      placeholder="Nhap phuong / xa"
+                      placeholder="Nhập phường / xã"
                       required
                     />
                   </label>
 
                   <label className="space-y-2 md:col-span-2">
-                    <span className="text-sm font-medium text-foreground">Dia chi cu the</span>
+                    <span className="text-sm font-medium text-foreground">Địa chỉ cụ thể</span>
                     <textarea
                       name="address"
                       value={addressForm.address}
                       onChange={handleAddressFieldChange}
                       className={`${inputClassName} min-h-28 resize-none`}
-                      placeholder="So nha, ten duong, toa nha..."
+                      placeholder="Số nhà, tên đường, tòa nhà..."
                       required
                     />
                   </label>
@@ -1027,7 +1022,7 @@ const Profile = () => {
                     onChange={handleAddressFieldChange}
                     className="mt-1 h-4 w-4 rounded border-border accent-foreground"
                   />
-                  Dat dia chi nay lam mac dinh de dung cho giao hang ve sau.
+                  Đặt địa chỉ này làm mặc định để dùng cho giao hàng về sau.
                 </label>
 
                 <div className="flex flex-wrap gap-3">
@@ -1041,7 +1036,7 @@ const Profile = () => {
                     }`}
                   >
                     {isAddressSubmitting ? <LoaderCircle size={16} className="animate-spin" /> : <MapPin size={16} />}
-                    {editingAddressId ? 'Luu dia chi' : 'Them dia chi'}
+                    {editingAddressId ? 'Lưu địa chỉ' : 'Thêm địa chỉ'}
                   </button>
 
                   {editingAddressId ? (
@@ -1050,7 +1045,7 @@ const Profile = () => {
                       onClick={() => resetAddressEditor()}
                       className="inline-flex items-center justify-center rounded-full border border-border px-5 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-foreground transition hover:border-foreground"
                     >
-                      Huy sua
+                      Hủy sửa
                     </button>
                   ) : null}
                 </div>
@@ -1065,8 +1060,8 @@ const Profile = () => {
                   <UserRound size={18} />
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Ho va ten</p>
-                  <p className="mt-2 text-lg font-semibold text-foreground">{profile.fullName || 'Chua cap nhat'}</p>
+                  <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Họ và tên</p>
+                  <p className="mt-2 text-lg font-semibold text-foreground">{profile.fullName || 'Chưa cập nhật'}</p>
                 </div>
               </div>
             </article>
@@ -1078,7 +1073,7 @@ const Profile = () => {
                 </div>
                 <div>
                   <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Email</p>
-                  <p className="mt-2 text-lg font-semibold text-foreground">{profile.email || 'Chua cap nhat'}</p>
+                  <p className="mt-2 text-lg font-semibold text-foreground">{profile.email || 'Chưa cập nhật'}</p>
                 </div>
               </div>
             </article>
@@ -1089,8 +1084,8 @@ const Profile = () => {
                   <Phone size={18} />
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">So dien thoai</p>
-                  <p className="mt-2 text-lg font-semibold text-foreground">{profile.phone || 'Chua cap nhat'}</p>
+                  <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Số điện thoại</p>
+                  <p className="mt-2 text-lg font-semibold text-foreground">{profile.phone || 'Chưa cập nhật'}</p>
                 </div>
               </div>
             </article>

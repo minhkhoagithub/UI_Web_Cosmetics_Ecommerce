@@ -34,7 +34,7 @@ const resolveDescription = (resolvedStatus, message) => {
     case 'FAILED':
       return 'Cổng thanh toán không xác nhận được giao dịch. Bạn có thể quay lại website để thử lại.'
     default:
-      return 'Backend đã tiếp nhận callback thanh toán. Bạn có thể quay lại website để xem trạng thái mới nhất.'
+      return 'Hệ thống đã tiếp nhận phản hồi thanh toán. Bạn có thể quay lại website để xem trạng thái mới nhất.'
   }
 }
 
@@ -78,7 +78,7 @@ const PaymentResult = () => {
         <div className="rounded-[2.5rem] border border-border bg-background p-8 shadow-sm md:p-12">
           <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
             <div className="max-w-2xl">
-              <p className="text-xs uppercase tracking-[0.28em] text-muted-foreground">Payment Result</p>
+              <p className="text-xs uppercase tracking-[0.28em] text-muted-foreground">Kết quả thanh toán</p>
               <div className="mt-5 flex items-center gap-4">
                 <div className={`rounded-full p-4 ${resolvedStatus === 'PAID' || resolvedStatus === 'SUCCESS' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
                   <StatusIcon size={30} />
@@ -115,8 +115,8 @@ const PaymentResult = () => {
           </div>
 
           {/* <div className="mt-8 rounded-[2rem] border border-border bg-secondary/30 p-5 text-sm leading-7 text-muted-foreground">
-            <p>Backend đã xử lý callback trước khi chuyển bạn tới trang này.</p>
-            <p>Nếu tab website chính của bạn vẫn đang mở, trạng thái thanh toán ở đó sẽ tiếp tục được đồng bộ từ backend.</p>
+            <p>Hệ thống đã xử lý phản hồi thanh toán trước khi chuyển bạn tới trang này.</p>
+            <p>Nếu tab website chính của bạn vẫn đang mở, trạng thái thanh toán ở đó sẽ tiếp tục được đồng bộ từ hệ thống.</p>
           </div> */}
 
           <div className="mt-8 flex flex-wrap gap-3">

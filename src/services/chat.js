@@ -4,7 +4,7 @@ export const getCustomerActiveRoomRequest = ({ userId }) => {
   return apiRequest(
     '/v1/chat/customer/rooms/active',
     { userId },
-    'Khong tai duoc phong chat. Vui long thu lai.',
+    'Không tải được phòng chat. Vui lòng thử lại.',
   )
 }
 
@@ -12,7 +12,7 @@ export const createCustomerRoomRequest = ({ userId }) => {
   return apiRequest(
     '/v1/chat/customer/rooms',
     { method: 'POST', userId },
-    'Khong tao duoc phong chat. Vui long thu lai.',
+    'Không tạo được phòng chat. Vui lòng thử lại.',
   )
 }
 
@@ -20,7 +20,7 @@ export const getRoomMessagesRequest = ({ roomId, userId }) => {
   return apiRequest(
     `/v1/chat/rooms/${roomId}/messages`,
     { userId },
-    'Khong tai duoc tin nhan. Vui long thu lai.',
+    'Không tải được tin nhắn. Vui lòng thử lại.',
   )
 }
 
@@ -35,7 +35,7 @@ export const uploadChatAttachmentRequest = ({ userId, file }) => {
       userId,
       body: formData,
     },
-    'Khong upload duoc tep dinh kem. Vui long thu lai.',
+    'Không upload được tệp đính kèm. Vui lòng thử lại.',
   )
 }
 
@@ -50,6 +50,6 @@ export const sendCustomerMessageRequest = ({ userId, roomId, payload }) => {
         ...payload,
       },
     },
-    'Khong gui duoc tin nhan. Vui long thu lai.',
+    'Không gửi được tin nhắn. Vui lòng thử lại.',
   )
 }

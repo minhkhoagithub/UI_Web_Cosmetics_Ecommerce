@@ -1,7 +1,7 @@
 import { apiRequest, buildQueryString } from './http'
 
 export const getCurrentUserProfileRequest = async () => {
-  return apiRequest('/v1/users/profile', {}, 'Khong the tai thong tin tai khoan hien tai.')
+  return apiRequest('/v1/users/profile', {}, 'Không thể tải thông tin tài khoản hiện tại.')
 }
 
 export const getAddressesRequest = async ({ userId }) => {
@@ -11,25 +11,54 @@ export const getAddressesRequest = async ({ userId }) => {
       method: 'GET',
       userId,
     },
-    'Khong the tai danh sach dia chi giao hang. Vui long thu lai.',
+    'Không thể tải danh sách địa chỉ giao hàng. Vui lòng thử lại.',
   )
 }
 
-export const updateUserProfileRequest = async ({ email, phone, fullName, avatar }) => {
+// export const updateUserProfileRequest = async ({ email, phone, fullName, avatar }) => {
+//   return apiRequest(
+//     '/v1/users/profile',
+//     {
+//       method: 'PUT',
+//       body: {
+//         email,
+//         phone,
+//         full_name: fullName,
+//         avatar,
+//       },
+//     },
+//     'Không thể cập nhật hồ sơ. Vui lòng thử lại.',
+//   )
+// }
+
+export const updateUserProfileRequest = async ({
+  email,
+  phone,
+  fullName,
+  avatarFile,
+}) => {
+  const formData = new FormData()
+
+  formData.append('email', email)
+  formData.append('phone', phone)
+  formData.append('fullName', fullName)
+
+  if (avatarFile) {
+    formData.append('avatarFile', avatarFile)
+  }
+
   return apiRequest(
     '/v1/users/profile',
     {
       method: 'PUT',
-      body: {
-        email,
-        phone,
-        full_name: fullName,
-        avatar,
-      },
+      body: formData,
+      headers: {}, // để browser tự set multipart/form-data
     },
-    'Khong the cap nhat ho so. Vui long thu lai.',
+    'Không thể cập nhật hồ sơ. Vui lòng thử lại.',
   )
 }
+
+
 
 export const confirmOldEmailChangeRequest = async ({ newEmail, otp }) => {
   return apiRequest(
@@ -37,7 +66,7 @@ export const confirmOldEmailChangeRequest = async ({ newEmail, otp }) => {
     {
       method: 'POST',
     },
-    'Khong the xac thuc email cu. Vui long thu lai.',
+    'Không thể xác thực email cũ. Vui lòng thử lại.',
   )
 }
 
@@ -47,7 +76,7 @@ export const verifyNewEmailChangeRequest = async ({ newEmail, otp }) => {
     {
       method: 'POST',
     },
-    'Khong the xac thuc email moi. Vui long thu lai.',
+    'Không thể xác thực email mới. Vui lòng thử lại.',
   )
 }
 
@@ -70,7 +99,7 @@ export const createAddressRequest = async (payload) => {
       userId,
       body: buildAddressPayload(addressPayload),
     },
-    'Khong the them dia chi giao hang. Vui long thu lai.',
+    'Không thể thêm địa chỉ giao hàng. Vui lòng thử lại.',
   )
 }
 
@@ -83,7 +112,7 @@ export const updateAddressRequest = async (addressId, payload) => {
       userId,
       body: buildAddressPayload(addressPayload),
     },
-    'Khong the cap nhat dia chi giao hang. Vui long thu lai.',
+    'Không thể cập nhật địa chỉ giao hàng. Vui lòng thử lại.',
   )
 }
 
@@ -94,6 +123,6 @@ export const deleteAddressRequest = async (addressId, { userId }) => {
       method: 'DELETE',
       userId,
     },
-    'Khong the xoa dia chi giao hang. Vui long thu lai.',
+    'Không thể xóa địa chỉ giao hàng. Vui lòng thử lại.',
   )
 }

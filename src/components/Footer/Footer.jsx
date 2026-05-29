@@ -11,7 +11,7 @@ const Footer = () => {
                     <div className="md:col-span-1">
                         <h3 className="font-display text-2xl font-semibold text-foreground mb-4 uppercase">E-Shop</h3>
                         <p className="font-body text-sm text-muted-foreground leading-relaxed mb-6">
-                            Curating premium lifestyle products for the modern connoisseur. Quality, style, and elegance in every detail.
+                            Tuyển chọn mỹ phẩm chất lượng cho thói quen chăm sóc da hằng ngày. Tinh tế, an toàn và đáng tin cậy trong từng sản phẩm.
                         </p>
                         {/* <div className="flex gap-3">
                             {
@@ -26,10 +26,10 @@ const Footer = () => {
 
                     {/* QUICK LINKS  */}
                     <div>
-                        <h4 className="font-body text-xs tracking-widest uppercase text-foreground font-semibold mb-4">Quick Links</h4>
+                        <h4 className="font-body text-xs tracking-widest uppercase text-foreground font-semibold mb-4">Liên kết nhanh</h4>
                         <ul className="space-y-3">
                             {
-                                ['New Arrivals', 'Best sellers', 'Sale', 'Gift Cards', 'Size Guide']?.map((link) => (
+                                ['Sản phẩm mới', 'Bán chạy', 'Khuyến mãi', 'Thẻ quà tặng', 'Hướng dẫn chọn']?.map((link) => (
                                     <li key={link}>
                                         <Link to={'#'} className="font-body text-sm text-muted-foreground hover:text-foreground transition-colors">{link}</Link>
                                     </li>
@@ -39,10 +39,10 @@ const Footer = () => {
                     </div>
                     {/* COMPANY  */}
                     <div>
-                        <h4 className="font-body text-xs tracking-widest uppercase text-foreground font-semibold mb-4">Company</h4>
+                        <h4 className="font-body text-xs tracking-widest uppercase text-foreground font-semibold mb-4">Công ty</h4>
                         <ul className="space-y-3">
                             {
-                                ['About us', 'Careers', 'Press', 'Sustainability', 'Affiliate Program']?.map((link) => (
+                                ['Về chúng tôi', 'Tuyển dụng', 'Tin tức', 'Phát triển bền vững', 'Đối tác liên kết']?.map((link) => (
                                     <li key={link}>
                                         <Link to={'#'} className="font-body text-sm text-muted-foreground hover:text-foreground transition-colors">{link}</Link>
                                     </li>
@@ -53,11 +53,11 @@ const Footer = () => {
 
                     {/* CONTACT  */}
                     <div>
-                        <h4 className="font-body text-xs tracking-widest uppercase text-foreground font-semibold mb-4">Company</h4>
+                        <h4 className="font-body text-xs tracking-widest uppercase text-foreground font-semibold mb-4">Liên hệ</h4>
                         <ul className="space-y-3">
                             <li className="flex items-center gap-2">
                                 <MapPin size={14} className="text-accent shrink-0" />
-                                <span className="font-body text-sm text-muted-foreground">123 E-SHOP Ave, NY 10001</span>
+                                <span className="font-body text-sm text-muted-foreground">123 Đại lộ E-SHOP, TP. Hồ Chí Minh</span>
                             </li>
                             <li className="flex items-center gap-2">
                                 <Phone size={14} className="text-accent shrink-0" />

@@ -233,7 +233,7 @@ export const loginRequest = async ({ identifier, password }) => {
       method: 'POST',
       body: JSON.stringify({ identifier, password }),
     },
-    'Dang nhap that bai. Vui long thu lai.',
+    'Đăng nhập thất bại. Vui lòng thử lại.',
   )
 }
 
@@ -244,7 +244,7 @@ export const registerRequest = async ({ email, password, fullName, phone }) => {
       method: 'POST',
       body: JSON.stringify({ email, password, fullName, phone }),
     },
-    'Dang ky that bai. Vui long thu lai.',
+    'Đăng ký thất bại. Vui lòng thử lại.',
   )
 }
 
@@ -255,7 +255,7 @@ export const verifyRegistrationOtpRequest = async ({ email, otp }) => {
       method: 'POST',
       body: JSON.stringify({ email, otp }),
     },
-    'Xac thuc OTP that bai. Vui long thu lai.',
+    'Xác thực OTP thất bại. Vui lòng thử lại.',
   )
 }
 
@@ -270,6 +270,6 @@ export const logoutRequest = async (accessToken) => {
           }
         : {},
     },
-    'Dang xuat that bai. Phien dang nhap cuc bo van se duoc xoa.',
+    'Đăng xuất thất bại. Phiên đăng nhập cục bộ vẫn sẽ được xóa.',
   )
 }

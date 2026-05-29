@@ -9,7 +9,7 @@ import { useCart } from '../../context/CartProvider'
 const Navbar = () => {
   const { pathname } = useLocation()
   const navigate = useNavigate()
-  const { setIsCartOpen, totalItems, setIsSearchOpen } = useCart()
+  const { setIsCartOpen, cartItemCount, setIsSearchOpen } = useCart()
   const { isAuthenticated, isLoggingOut, logout, user } = useAuth()
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const userMenuRef = useRef(null)
@@ -21,7 +21,7 @@ const Navbar = () => {
   const registerButtonClass = ({ isActive }) =>
     `hidden rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] transition-colors sm:inline-flex ${isActive ? 'border-foreground bg-foreground text-primary-foreground' : 'border-border text-foreground hover:border-foreground'}`
 
-  const displayName = useMemo(() => user?.fullName?.trim() || user?.email || 'Tai khoan', [user?.email, user?.fullName])
+  const displayName = useMemo(() => user?.fullName?.trim() || user?.email || 'Tài khoản', [user?.email, user?.fullName])
 
   useEffect(() => {
     if (!isUserMenuOpen) {
@@ -41,7 +41,7 @@ const Navbar = () => {
   const handleLogout = async () => {
     await logout()
     setIsUserMenuOpen(false)
-    toast.success('Dang xuat thanh cong.')
+    toast.success('Đăng xuất thành công.')
     navigate('/login', { replace: true })
   }
 
@@ -59,7 +59,7 @@ const Navbar = () => {
             </Link>
           ) : (
             <a href="#product" className="text-sm font-body tracking-wider uppercase text-muted-foreground transition-colors hover:text-foreground">
-              mua sam
+              mua sắm
             </a>
           )}
         </div>
@@ -73,13 +73,13 @@ const Navbar = () => {
             <>
               {pathname !== '/login' ? (
                 <NavLink to="/login" className={desktopAuthLinkClass}>
-                  dang nhap
+                  đăng nhập
                 </NavLink>
               ) : null}
 
               {pathname !== '/register' ? (
                 <NavLink to="/register" className={registerButtonClass}>
-                  dang ky
+                  đăng ký
                 </NavLink>
               ) : null}
 
@@ -103,7 +103,7 @@ const Navbar = () => {
                     type="button"
                     onClick={() => setIsUserMenuOpen((currentValue) => !currentValue)}
                     className="flex items-center gap-2 rounded-full border border-border bg-background/85 px-3 py-2 text-sm text-foreground transition-colors hover:border-foreground/40"
-                    aria-label="Mo menu tai khoan"
+                    aria-label="Mở menu tài khoản"
                     aria-expanded={isUserMenuOpen}
                   >
                     <span className="hidden max-w-40 truncate font-medium text-foreground lg:inline-flex">{displayName}</span>
@@ -118,7 +118,7 @@ const Navbar = () => {
                       <div className="rounded-[1.75rem] border border-border bg-background p-3 shadow-2xl">
                         <div className="border-b border-border px-3 pb-3">
                           <p className="truncate font-semibold text-foreground">{displayName}</p>
-                          <p className="mt-1 truncate text-sm text-muted-foreground">{user?.email || 'Tai khoan khach hang'}</p>
+                          <p className="mt-1 truncate text-sm text-muted-foreground">{user?.email || 'Tài khoản khách hàng'}</p>
                         </div>
 
                         <div className="mt-3 space-y-1">
@@ -128,7 +128,7 @@ const Navbar = () => {
                             className="flex items-center gap-3 rounded-2xl px-3 py-3 text-sm text-foreground transition-colors hover:bg-secondary"
                           >
                             <UserRound size={16} />
-                            Chinh sua thong tin
+                            Chỉnh sửa thông tin
                           </Link>
 
                           <Link
@@ -137,7 +137,7 @@ const Navbar = () => {
                             className="flex items-center gap-3 rounded-2xl px-3 py-3 text-sm text-foreground transition-colors hover:bg-secondary"
                           >
                             <ReceiptText size={16} />
-                            Lich su mua hang
+                            Lịch sử mua hàng
                           </Link>
 
                           <button
@@ -151,7 +151,7 @@ const Navbar = () => {
                             }`}
                           >
                             <LogOut size={16} />
-                            {isLoggingOut ? 'Dang xu ly dang xuat' : 'Dang xuat'}
+                            {isLoggingOut ? 'Đang xử lý đăng xuất' : 'Đăng xuất'}
                           </button>
                         </div>
                       </div>
@@ -164,19 +164,19 @@ const Navbar = () => {
                     to="/login"
                     className="hidden text-sm font-body tracking-wider uppercase text-muted-foreground transition-colors hover:text-foreground md:inline-flex"
                   >
-                    dang nhap
+                    đăng nhập
                   </NavLink>
 
                   <NavLink
                     to="/login"
                     className="cursor-pointer text-muted-foreground transition-colors hover:text-foreground sm:hidden"
-                    aria-label="Mo trang dang nhap"
+                    aria-label="Mở trang đăng nhập"
                   >
                     <User size={20} />
                   </NavLink>
 
                   <NavLink to="/register" className={registerButtonClass}>
-                    dang ky
+                    đăng ký
                   </NavLink>
                 </>
               )}
@@ -191,7 +191,7 @@ const Navbar = () => {
 
               <button
                 type="button"
-                onClick={() => toast.info('Wishlist chua duoc noi backend trong vong trien khai nay.')}
+                onClick={() => toast.info('Danh sách yêu thích chưa được nối backend trong vòng triển khai này.')}
                 className="relative cursor-pointer text-muted-foreground transition-colors hover:text-foreground"
               >
                 <Heart size={20} />
@@ -215,7 +215,7 @@ const Navbar = () => {
                   animate={{ scale: 1 }}
                   className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-xs font-body font-semibold text-accent-foreground"
                 >
-                  {totalItems ?? 0}
+                  {cartItemCount ?? 0}
                 </motion.span>
               </button>
             </>

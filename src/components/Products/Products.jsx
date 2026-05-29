@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { LoaderCircle } from 'lucide-react'
 import { getProductDetail, mapSearchItemToCard, searchProducts } from '../../services/catalog'
+import { getActiveProductPromotionsRequest } from '../../services/promotion'
 import ProductCard from '../ProductCard/ProductCard'
 
 const Products = ({ setSelectedProduct }) => {
   const [products, setProducts] = useState([])
-  const [activeCategory, setActiveCategory] = useState('All')
+  const [activeCategory, setActiveCategory] = useState('Tất cả')
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
 
@@ -17,7 +18,10 @@ const Products = ({ setSelectedProduct }) => {
       setErrorMessage('')
 
       try {
-        const response = await searchProducts({ size: 12 })
+        const [response, activePromotions] = await Promise.all([
+          searchProducts({ size: 50 }),
+          getActiveProductPromotionsRequest().catch(() => []),
+        ])
         if (!isSubscribed) {
           return
         }
@@ -37,7 +41,7 @@ const Products = ({ setSelectedProduct }) => {
           }
         })
 
-        setProducts(response.items.map((item) => mapSearchItemToCard(item, detailById.get(item.productId))))
+        setProducts(response.items.map((item) => mapSearchItemToCard(item, detailById.get(item.productId), activePromotions)))
       } catch (error) {
         if (isSubscribed) {
           setErrorMessage(error.message)
@@ -57,12 +61,12 @@ const Products = ({ setSelectedProduct }) => {
   }, [])
 
   const categories = useMemo(
-    () => ['All', ...Array.from(new Set(products.map((product) => product.category).filter(Boolean)))],
+    () => ['Tất cả', ...Array.from(new Set(products.map((product) => product.category).filter(Boolean)))],
     [products],
   )
 
   const filteredProducts = useMemo(() => {
-    if (activeCategory === 'All') {
+    if (activeCategory === 'Tất cả') {
       return products
     }
 
@@ -71,15 +75,15 @@ const Products = ({ setSelectedProduct }) => {
 
   useEffect(() => {
     if (!categories.includes(activeCategory)) {
-      setActiveCategory('All')
+      setActiveCategory('Tất cả')
     }
   }, [activeCategory, categories])
 
   return (
     <section id="product" className="container mx-auto px-4 py-16">
       <div className="mb-12 text-center">
-        <p className="mb-3 font-body text-sm uppercase tracking-[0.3em] text-muted-foreground">Curated Collection</p>
-        <h2 className="font-display text-3xl font-semibold text-foreground md:text-4xl">Featured Products</h2>
+        <p className="mb-3 font-body text-sm uppercase tracking-[0.3em] text-muted-foreground">Bộ sưu tập chọn lọc</p>
+        <h2 className="font-display text-3xl font-semibold text-foreground md:text-4xl">Sản phẩm nổi bật</h2>
       </div>
 
       {isLoading ? (
@@ -111,7 +115,7 @@ const Products = ({ setSelectedProduct }) => {
 
           {filteredProducts.length === 0 ? (
             <div className="rounded-[2rem] border border-border px-6 py-10 text-center text-muted-foreground">
-              Khong co san pham phu hop voi bo loc hien tai.
+              Không có sản phẩm phù hợp với bộ lọc hiện tại.
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">

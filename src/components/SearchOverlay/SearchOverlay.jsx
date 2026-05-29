@@ -2,7 +2,8 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { SearchIcon, X } from 'lucide-react'
 import { useDeferredValue, useEffect, useRef, useState } from 'react'
 import { useCart } from '../../context/CartProvider'
-import { getProductSuggestions, mapSearchItemToCard, searchProducts } from '../../services/catalog'
+import { getProductDetail, getProductSuggestions, mapSearchItemToCard, searchProducts } from '../../services/catalog'
+import { getActiveProductPromotionsRequest } from '../../services/promotion'
 import { formatCurrency } from '../../utils/format'
 
 const SearchOverlay = ({ onProductClick }) => {
@@ -51,6 +52,24 @@ const SearchOverlay = ({ onProductClick }) => {
 
         setSuggestions(suggestionResponse)
         setResults(searchResponse.items.map((item) => mapSearchItemToCard(item)))
+
+        const [activePromotions, details] = await Promise.all([
+          getActiveProductPromotionsRequest().catch(() => []),
+          Promise.allSettled(searchResponse.items.map((item) => getProductDetail(item.productId))),
+        ])
+
+        if (!isSubscribed) {
+          return
+        }
+
+        const detailById = new Map()
+        details.forEach((result, index) => {
+          if (result.status === 'fulfilled') {
+            detailById.set(searchResponse.items[index].productId, result.value)
+          }
+        })
+
+        setResults(searchResponse.items.map((item) => mapSearchItemToCard(item, detailById.get(item.productId), activePromotions)))
       } catch {
         if (isSubscribed) {
           setSuggestions([])
@@ -97,7 +116,7 @@ const SearchOverlay = ({ onProductClick }) => {
                   onChange={(event) => setSearchQuery(event.target.value)}
                   value={searchQuery}
                   type="text"
-                  placeholder="Tim theo ten, dong san pham hoac insight cham soc da..."
+                  placeholder="Tìm theo tên, dòng sản phẩm hoặc nhu cầu chăm sóc da..."
                   className="flex-1 bg-transparent font-body text-lg text-foreground outline-none placeholder:text-muted-foreground"
                 />
 
@@ -128,12 +147,12 @@ const SearchOverlay = ({ onProductClick }) => {
                   ) : null}
 
                   {isLoading ? (
-                    <p className="py-8 text-center text-muted-foreground">Dang tim san pham phu hop...</p>
+                    <p className="py-8 text-center text-muted-foreground">Đang tìm sản phẩm phù hợp...</p>
                   ) : results.length === 0 ? (
-                    <p className="py-8 text-center text-muted-foreground">Khong tim thay san pham phu hop voi "{searchQuery}"</p>
+                    <p className="py-8 text-center text-muted-foreground">Không tìm thấy sản phẩm phù hợp với "{searchQuery}"</p>
                   ) : (
                     <div className="space-y-3">
-                      <p className="text-xs uppercase tracking-widest text-muted-foreground">{results.length} ket qua</p>
+                      <p className="text-xs uppercase tracking-widest text-muted-foreground">{results.length} kết quả</p>
 
                       {results.map((product) => (
                         <motion.button
@@ -148,12 +167,26 @@ const SearchOverlay = ({ onProductClick }) => {
                           }}
                         >
                           <div className="flex h-16 w-16 items-center justify-center bg-secondary text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                            Item
+                            Sản phẩm
                           </div>
                           <div className="min-w-0 flex-1">
                             <p className="text-xs uppercase tracking-widest text-muted-foreground">{product.category}</p>
                             <h4 className="truncate font-display text-base font-medium text-foreground">{product.name}</h4>
-                            <p className="text-sm font-semibold text-foreground">{formatCurrency(product.price)}</p>
+                            <div className="mt-1 flex flex-wrap items-center gap-2">
+                              <p className={product.onPromotion ? 'text-sm font-semibold text-rose-700' : 'text-sm font-semibold text-foreground'}>
+                                {formatCurrency(product.price)}
+                              </p>
+                              {product.onPromotion ? (
+                                <>
+                                  <span className="rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-rose-700">
+                                    {product.promotionLabel || 'Khuyến mãi'}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground line-through">
+                                    {formatCurrency(product.originalPrice)}
+                                  </span>
+                                </>
+                              ) : null}
+                            </div>
                           </div>
                         </motion.button>
                       ))}
@@ -162,7 +195,7 @@ const SearchOverlay = ({ onProductClick }) => {
                 </div>
               ) : (
                 <div className="rounded-[2rem] border border-dashed border-border px-6 py-10 text-center text-muted-foreground">
-                  Bat dau nhap tu khoa de goi endpoint tim kiem va goi y tu backend.
+                  Bắt đầu nhập từ khóa để gọi endpoint tìm kiếm và gợi ý từ backend.
                 </div>
               )}
             </div>
