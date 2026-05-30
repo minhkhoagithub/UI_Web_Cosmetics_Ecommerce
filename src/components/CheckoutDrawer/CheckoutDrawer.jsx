@@ -20,6 +20,7 @@ const inputClassName =
 const DEFAULT_FORM_VALUES = {
   shipFullName: '',
   shipPhone: '',
+  shipEmail: '',
   shipAddress: '',
   shipCity: 'TP. Ho Chi Minh',
   shipDistrict: '',
@@ -51,6 +52,7 @@ const sortSavedAddresses = (addresses = []) =>
 const buildShippingFields = ({ user, address } = {}) => ({
   shipFullName: address?.fullName?.trim() || user?.fullName?.trim() || '',
   shipPhone: address?.phone?.trim() || user?.phone?.trim() || '',
+  shipEmail: user?.email?.trim() || '',
   shipAddress: address?.address?.trim() || '',
   shipCity: address?.city?.trim() || 'TP. Ho Chi Minh',
   shipDistrict: address?.district?.trim() || '',
@@ -157,8 +159,9 @@ const CheckoutDrawer = () => {
       userId: user?.userId ?? '',
       fullName: user?.fullName ?? '',
       phone: user?.phone ?? '',
+      email: user?.email ?? '',
     }),
-    [user?.fullName, user?.phone, user?.userId],
+    [user?.email, user?.fullName, user?.phone, user?.userId],
   )
   const shouldDisableCheckout =
     isSubmitting ||
@@ -590,6 +593,7 @@ const CheckoutDrawer = () => {
         promotionCode: formValues.promotionCode || null,
         shipFullName: formValues.shipFullName.trim(),
         shipPhone: formValues.shipPhone.trim(),
+        shipEmail: formValues.shipEmail.trim(),
         shipAddress: formValues.shipAddress.trim(),
         shipCity: formValues.shipCity.trim(),
         shipDistrict: formValues.shipDistrict.trim(),
@@ -604,6 +608,8 @@ const CheckoutDrawer = () => {
         orderId: orderResult.orderId,
         orderNo: orderResult.orderNo,
         paymentMethod: formValues.paymentMethod,
+        paymentStatus: 'UNPAID',
+        status: 'CREATED',
         receiverName: formValues.shipFullName.trim(),
         totalAmount: grandTotal,
         createdAt: new Date().toISOString(),
@@ -782,6 +788,15 @@ const CheckoutDrawer = () => {
                         value={formValues.shipPhone}
                         onChange={handleChange}
                         placeholder="Số điện thoại"
+                        className={inputClassName}
+                        required
+                      />
+                      <input
+                        name="shipEmail"
+                        type="email"
+                        value={formValues.shipEmail}
+                        onChange={handleChange}
+                        placeholder="Email nhan xac nhan don hang"
                         className={inputClassName}
                         required
                       />

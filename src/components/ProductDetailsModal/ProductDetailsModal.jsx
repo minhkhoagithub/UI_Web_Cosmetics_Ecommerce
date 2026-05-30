@@ -29,6 +29,7 @@ const ProductDetailsModal = ({ product, onClose }) => {
   const [reviews, setReviews] = useState([])
   const [isLoadingReviews, setIsLoadingReviews] = useState(false)
   const [hasLoadedReviews, setHasLoadedReviews] = useState(false)
+  const [failedImageUrl, setFailedImageUrl] = useState('')
 
   useEffect(() => {
     if (!product?.productId) {
@@ -43,6 +44,7 @@ const ProductDetailsModal = ({ product, onClose }) => {
       setQuantity(1)
       setReviews([])
       setHasLoadedReviews(false)
+      setFailedImageUrl('')
 
       try {
         setIsLoadingReviews(true)
@@ -105,6 +107,8 @@ const ProductDetailsModal = ({ product, onClose }) => {
     () => detailProduct?.variants.find((variant) => variant.id === selectedVariantId) ?? null,
     [detailProduct?.variants, selectedVariantId],
   )
+  const displayedImageUrl = [selectedVariant?.image, detailProduct?.image]
+    .find((imageUrl) => imageUrl && imageUrl !== failedImageUrl) ?? ''
 
   const displayedRating = reviewStats ? reviewStats.averageRating : detailProduct?.rating ?? 0
   const displayedReviewCount = reviewStats ? reviewStats.reviewCount : detailProduct?.reviews ?? 0
@@ -177,11 +181,12 @@ const ProductDetailsModal = ({ product, onClose }) => {
         ) : detailProduct ? (
           <>
             <div className="relative bg-secondary md:w-1/2">
-              {selectedVariant?.image || detailProduct.image ? (
+              {displayedImageUrl && displayedImageUrl !== failedImageUrl ? (
                 <img
-                  src={selectedVariant?.image || detailProduct.image}
+                  src={displayedImageUrl}
                   alt={detailProduct.name}
                   className="h-72 w-full object-cover md:h-full"
+                  onError={() => setFailedImageUrl(displayedImageUrl)}
                 />
               ) : (
                 <div className="flex h-72 w-full items-center justify-center bg-secondary text-sm uppercase tracking-[0.28em] text-muted-foreground md:h-full">

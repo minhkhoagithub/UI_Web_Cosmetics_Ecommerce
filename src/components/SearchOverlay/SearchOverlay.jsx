@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion as Motion } from 'framer-motion'
 import { ImagePlus, SearchIcon, X } from 'lucide-react'
 import { useDeferredValue, useEffect, useRef, useState } from 'react'
 import { useCart } from '../../context/CartProvider'
@@ -15,6 +15,7 @@ const SearchOverlay = ({ onProductClick }) => {
   const [results, setResults] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [selectedImageName, setSelectedImageName] = useState('')
+  const [failedImageIds, setFailedImageIds] = useState(() => new Set())
 
   useEffect(() => {
     if (isSearchOpen) {
@@ -24,8 +25,13 @@ const SearchOverlay = ({ onProductClick }) => {
       setSuggestions([])
       setResults([])
       setSelectedImageName('')
+      setFailedImageIds(new Set())
     }
   }, [isSearchOpen, setSearchQuery])
+
+  const markImageFailed = (productId) => {
+    setFailedImageIds((currentIds) => new Set(currentIds).add(productId))
+  }
 
   const handleImageSearch = async (event) => {
     const file = event.target.files?.[0]
@@ -38,6 +44,7 @@ const SearchOverlay = ({ onProductClick }) => {
     setSelectedImageName(file.name)
     setIsLoading(true)
     setSuggestions([])
+    setFailedImageIds(new Set())
 
     try {
       const searchResponse = await searchProductsByImage({ file, size: 6 })
@@ -86,6 +93,7 @@ const SearchOverlay = ({ onProductClick }) => {
 
     const loadSearchData = async () => {
       setIsLoading(true)
+      setFailedImageIds(new Set())
 
       try {
         const [suggestionResponse, searchResponse] = await Promise.all([
@@ -140,7 +148,7 @@ const SearchOverlay = ({ onProductClick }) => {
     <AnimatePresence>
       {isSearchOpen ? (
         <>
-          <motion.div
+          <Motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -148,7 +156,7 @@ const SearchOverlay = ({ onProductClick }) => {
             onClick={() => setIsSearchOpen(false)}
           />
 
-          <motion.div
+          <Motion.div
             initial={{ opacity: 0, y: -40 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -40 }}
@@ -222,7 +230,7 @@ const SearchOverlay = ({ onProductClick }) => {
                       <p className="text-xs uppercase tracking-widest text-muted-foreground">{results.length} kết quả</p>
 
                       {results.map((product) => (
-                        <motion.button
+                        <Motion.button
                           key={product.productId}
                           type="button"
                           initial={{ opacity: 0, y: 10 }}
@@ -233,8 +241,19 @@ const SearchOverlay = ({ onProductClick }) => {
                             setIsSearchOpen(false)
                           }}
                         >
-                          <div className="flex h-16 w-16 items-center justify-center bg-secondary text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                            Sản phẩm
+                          <div className="h-16 w-16 shrink-0 overflow-hidden bg-secondary">
+                            {product.image && !failedImageIds.has(product.productId) ? (
+                              <img
+                                src={product.image}
+                                alt={product.name}
+                                className="h-full w-full object-cover"
+                                onError={() => markImageFailed(product.productId)}
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center px-2 text-center text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                                Chưa có ảnh
+                              </div>
+                            )}
                           </div>
                           <div className="min-w-0 flex-1">
                             <p className="text-xs uppercase tracking-widest text-muted-foreground">{product.category}</p>
@@ -255,7 +274,7 @@ const SearchOverlay = ({ onProductClick }) => {
                               ) : null}
                             </div>
                           </div>
-                        </motion.button>
+                        </Motion.button>
                       ))}
                     </div>
                   )}
@@ -266,7 +285,7 @@ const SearchOverlay = ({ onProductClick }) => {
                 </div>
               )}
             </div>
-          </motion.div>
+          </Motion.div>
         </>
       ) : null}
     </AnimatePresence>

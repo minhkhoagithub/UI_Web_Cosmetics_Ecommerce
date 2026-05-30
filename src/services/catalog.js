@@ -83,22 +83,45 @@ const normalizeMediaUrl = (url) => {
     return null
   }
 
-  if (/^https?:\/\//i.test(url) || /^data:/i.test(url)) {
-    return url
+  const mediaUrl = String(url).trim()
+  if (!mediaUrl) {
+    return null
+  }
+
+  if (/^https?:\/\//i.test(mediaUrl) || /^data:/i.test(mediaUrl)) {
+    return mediaUrl
   }
 
   if (!API_ORIGIN) {
-    return url
+    return mediaUrl
   }
 
-  return url.startsWith('/') ? `${API_ORIGIN}${url}` : `${API_ORIGIN}/${url}`
+  return mediaUrl.startsWith('/') ? `${API_ORIGIN}${mediaUrl}` : `${API_ORIGIN}/${mediaUrl}`
+}
+
+const mediaUrlOf = (entry) => {
+  if (typeof entry === 'string') {
+    return entry
+  }
+
+  return entry?.url ?? entry?.imageUrl ?? entry?.thumbnailUrl ?? entry?.secureUrl ?? null
+}
+
+const isImageMedia = (entry) => {
+  if (typeof entry === 'string') {
+    return true
+  }
+
+  const type = String(entry?.type ?? entry?.mediaType ?? '').trim().toUpperCase()
+  return !type || type === 'IMAGE'
 }
 
 const pickPrimaryMediaUrl = (media = []) => {
-  const validMedia = media.filter((entry) => entry?.url && (!entry?.type || entry.type === 'IMAGE'))
+  const entries = Array.isArray(media) ? media : []
+  const validMedia = entries.filter((entry) => mediaUrlOf(entry) && isImageMedia(entry))
   const primaryMedia = validMedia.find((entry) => entry?.primary || entry?.isPrimary)
 
-  return normalizeMediaUrl(primaryMedia?.url ?? validMedia[0]?.url ?? null)
+  return normalizeMediaUrl(mediaUrlOf(primaryMedia ?? validMedia[0]))
 }
 
 export const getProductImage = (detail) => {
@@ -109,6 +132,16 @@ export const getProductImage = (detail) => {
   const variantImage = pickPrimaryMediaUrl((detail.variants ?? []).flatMap((variant) => variant?.media ?? []))
 
   return variantImage ?? pickPrimaryMediaUrl(detail.media) ?? null
+}
+
+export const getVariantImage = (detail, variantId) => {
+  if (!detail) {
+    return null
+  }
+
+  const variant = (detail.variants ?? []).find((item) => item?.id === variantId)
+
+  return pickPrimaryMediaUrl(variant?.media) ?? getProductImage(detail)
 }
 
 const getPromotionVariantIds = (promotion) => {
@@ -288,7 +321,7 @@ export const mapSearchItemToCard = (item, detail, promotions = []) => {
     soldCount: item.soldCount ?? 0,
     inStock: item.inStock,
     variantCount: item.activeVariantCount ?? 0,
-    image: getProductImage(detail),
+    image: getProductImage(detail) ?? normalizeMediaUrl(item.thumbnailUrl ?? item.imageUrl ?? item.url),
     description: detail?.descriptionMd || detail?.shortDescription || '',
   }
 }
@@ -303,7 +336,7 @@ export const mapProductDetailToSelection = (detail, fallback = {}, promotions = 
     label: resolveVariantDisplayLabel(variant, index),
     price: variant.price,
     stockQuantity: variant.stockQuantity,
-    image: pickPrimaryMediaUrl(variant.media) ?? getProductImage(detail),
+    image: pickPrimaryMediaUrl(variant.media) ?? getProductImage(detail) ?? fallback.image,
     ...mapVariantPromotionFields(variant, promotions),
   }))
   const pricing = summarizePromotionPricing(mappedVariants)
@@ -314,7 +347,7 @@ export const mapProductDetailToSelection = (detail, fallback = {}, promotions = 
     name: detail?.name ?? fallback.name,
     slug: detail?.slug ?? fallback.slug,
     category: fallback.category ?? fallback.typeName ?? 'Chăm sóc da',
-    image: getProductImage(detail),
+    image: getProductImage(detail) ?? fallback.image,
     price: mappedVariants.length ? pricing.price : fallback.price,
     priceMax: mappedVariants.length ? pricing.priceMax : fallback.priceMax,
     originalPrice: mappedVariants.length ? pricing.originalPrice : fallback.originalPrice ?? fallback.price,
