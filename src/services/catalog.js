@@ -207,6 +207,37 @@ export const searchProducts = async ({ q, typeIds, page = 0, size = 12, sort = '
   )
 }
 
+export const searchProductsByImage = async ({
+  file,
+  typeIds,
+  minPrice,
+  maxPrice,
+  inStock,
+  sort = 'relevance',
+  page = 0,
+  size = 6,
+} = {}) => {
+  const formData = new FormData()
+  formData.append('file', file)
+
+  if (Array.isArray(typeIds)) {
+    typeIds.forEach((typeId) => {
+      if (typeId !== undefined && typeId !== null && typeId !== '') {
+        formData.append('typeIds', String(typeId))
+      }
+    })
+  }
+
+  return apiRequest(
+    `/v1/products/search/image${buildQueryString({ minPrice, maxPrice, inStock, sort, page, size })}`,
+    {
+      method: 'POST',
+      body: formData,
+    },
+    'Image search failed.',
+  )
+}
+
 export const getProductSuggestions = async (q) => {
   if (!q?.trim()) {
     return []
@@ -339,3 +370,4 @@ export const getRecentProducts = () => {
     return []
   }
 }
+
