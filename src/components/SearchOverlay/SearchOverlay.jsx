@@ -1,18 +1,20 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { SearchIcon, X } from 'lucide-react'
+import { ImagePlus, SearchIcon, X } from 'lucide-react'
 import { useDeferredValue, useEffect, useRef, useState } from 'react'
 import { useCart } from '../../context/CartProvider'
-import { getProductDetail, getProductSuggestions, mapSearchItemToCard, searchProducts } from '../../services/catalog'
+import { getProductDetail, getProductSuggestions, mapSearchItemToCard, searchProducts, searchProductsByImage } from '../../services/catalog'
 import { getActiveProductPromotionsRequest } from '../../services/promotion'
 import { formatCurrency } from '../../utils/format'
 
 const SearchOverlay = ({ onProductClick }) => {
   const { isSearchOpen, setIsSearchOpen, searchQuery, setSearchQuery } = useCart()
   const inputRef = useRef(null)
+  const imageInputRef = useRef(null)
   const deferredQuery = useDeferredValue(searchQuery)
   const [suggestions, setSuggestions] = useState([])
   const [results, setResults] = useState([])
   const [isLoading, setIsLoading] = useState(false)
+  const [selectedImageName, setSelectedImageName] = useState('')
 
   useEffect(() => {
     if (isSearchOpen) {
@@ -21,8 +23,53 @@ const SearchOverlay = ({ onProductClick }) => {
       setSearchQuery('')
       setSuggestions([])
       setResults([])
+      setSelectedImageName('')
     }
   }, [isSearchOpen, setSearchQuery])
+
+  const handleImageSearch = async (event) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+
+    if (!file) {
+      return
+    }
+
+    setSelectedImageName(file.name)
+    setIsLoading(true)
+    setSuggestions([])
+
+    try {
+      const searchResponse = await searchProductsByImage({ file, size: 6 })
+      const payload = searchResponse?.result ?? searchResponse
+      const extractedQuery = searchResponse?.extractedQuery ?? ''
+      const items = Array.isArray(payload?.items) ? payload.items : []
+
+      if (extractedQuery) {
+        setSearchQuery(extractedQuery)
+      }
+
+      setResults(items.map((item) => mapSearchItemToCard(item)))
+
+      const [activePromotions, details] = await Promise.all([
+        getActiveProductPromotionsRequest().catch(() => []),
+        Promise.allSettled(items.map((item) => getProductDetail(item.productId))),
+      ])
+
+      const detailById = new Map()
+      details.forEach((result, index) => {
+        if (result.status === 'fulfilled') {
+          detailById.set(items[index].productId, result.value)
+        }
+      })
+
+      setResults(items.map((item) => mapSearchItemToCard(item, detailById.get(item.productId), activePromotions)))
+    } catch {
+      setResults([])
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   useEffect(() => {
     if (!isSearchOpen) {
@@ -119,6 +166,21 @@ const SearchOverlay = ({ onProductClick }) => {
                   placeholder="Tìm theo tên, dòng sản phẩm hoặc nhu cầu chăm sóc da..."
                   className="flex-1 bg-transparent font-body text-lg text-foreground outline-none placeholder:text-muted-foreground"
                 />
+                <input
+                  ref={imageInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageSearch}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => imageInputRef.current?.click()}
+                  className="cursor-pointer rounded-full p-2 transition-colors hover:bg-muted"
+                  title="Tìm bằng hình ảnh"
+                >
+                  <ImagePlus size={20} className="text-foreground" />
+                </button>
 
                 <button
                   type="button"
@@ -129,8 +191,13 @@ const SearchOverlay = ({ onProductClick }) => {
                 </button>
               </div>
 
-              {searchQuery.trim() ? (
+              {searchQuery.trim() || selectedImageName ? (
                 <div className="max-h-[60vh] overflow-auto border-t border-border pt-4">
+                  {selectedImageName ? (
+                    <p className="mb-3 text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                      Ảnh đã chọn: {selectedImageName}
+                    </p>
+                  ) : null}
                   {suggestions.length > 0 ? (
                     <div className="mb-4 flex flex-wrap gap-2">
                       {suggestions.map((suggestion) => (
