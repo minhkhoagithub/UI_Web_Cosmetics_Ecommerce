@@ -1,9 +1,10 @@
-import { ArrowLeft, Clock3, LoaderCircle, ReceiptText, Star } from 'lucide-react'
+import { ArrowLeft, Clock3, LoaderCircle, ReceiptText, Star, XCircle } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useAuth } from '../../context/AuthProvider'
-import { getMyOrderDetailRequest } from '../../services/order'
+import { getProductDetail, getVariantImage } from '../../services/catalog'
+import { cancelOrderRequest, getMyOrderDetailRequest } from '../../services/order'
 import { createReviewRequest } from '../../services/review'
 import { formatCurrency, formatPaymentStatusLabel, getPaymentStatusTone } from '../../utils/format'
 
@@ -74,6 +75,38 @@ const buildInitialReviewForms = (items = []) =>
     return forms
   }, {})
 
+const getOrderItemImage = (item) => item?.imageUrl || item?.image || item?.thumbnailUrl || ''
+
+const enrichOrderDetailImages = async (orderDetail) => {
+  const items = orderDetail?.items ?? []
+  const productIds = Array.from(new Set(
+    items
+      .filter((item) => !getOrderItemImage(item))
+      .map((item) => item?.productId)
+      .filter(Boolean),
+  ))
+
+  if (productIds.length === 0) {
+    return orderDetail
+  }
+
+  const details = await Promise.allSettled(productIds.map((productId) => getProductDetail(productId)))
+  const detailByProductId = new Map()
+  details.forEach((result, index) => {
+    if (result.status === 'fulfilled') {
+      detailByProductId.set(productIds[index], result.value)
+    }
+  })
+
+  return {
+    ...orderDetail,
+    items: items.map((item) => ({
+      ...item,
+      imageUrl: getOrderItemImage(item) || getVariantImage(detailByProductId.get(item.productId), item.variantId),
+    })),
+  }
+}
+
 const OrderDetail = () => {
   const navigate = useNavigate()
   const { orderId } = useParams()
@@ -83,9 +116,14 @@ const OrderDetail = () => {
   const [submittingReviewKeys, setSubmittingReviewKeys] = useState({})
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
+  const [failedImageItemKeys, setFailedImageItemKeys] = useState(() => new Set())
+  const [isCancelFormOpen, setIsCancelFormOpen] = useState(false)
+  const [cancelReason, setCancelReason] = useState('')
+  const [isCancellingOrder, setIsCancellingOrder] = useState(false)
 
   const isReviewableOrder = REVIEWABLE_ORDER_STATUSES.has(orderDetail?.status ?? '')
   const paymentStatus = orderDetail?.paymentStatus ?? 'UNPAID'
+  const canCancelOrder = ['CREATED', 'CONFIRMED'].includes(orderDetail?.status ?? '') && paymentStatus === 'UNPAID'
 
   const loadOrderDetail = useCallback(async ({ silent = false } = {}) => {
     if (!orderId) {
@@ -95,14 +133,20 @@ const OrderDetail = () => {
     if (!silent) {
       setIsLoading(true)
       setErrorMessage('')
+      setFailedImageItemKeys(new Set())
     }
 
     try {
       const response = await getMyOrderDetailRequest(orderId)
-      setOrderDetail(response)
+      const enrichedResponse = await enrichOrderDetailImages(response)
+      setOrderDetail(enrichedResponse)
+      if (enrichedResponse?.status === 'CANCELLED' || enrichedResponse?.paymentStatus === 'PAID') {
+        setIsCancelFormOpen(false)
+        setCancelReason('')
+      }
       setErrorMessage('')
       setReviewForms((currentForms) => ({
-        ...buildInitialReviewForms(response?.items ?? []),
+        ...buildInitialReviewForms(enrichedResponse?.items ?? []),
         ...currentForms,
       }))
     } catch (error) {
@@ -138,6 +182,10 @@ const OrderDetail = () => {
         [fieldName]: value,
       },
     }))
+  }
+
+  const markItemImageFailed = (itemKey) => {
+    setFailedImageItemKeys((currentKeys) => new Set(currentKeys).add(itemKey))
   }
 
   const handleSubmitReview = async (item) => {
@@ -176,6 +224,38 @@ const OrderDetail = () => {
         ...currentState,
         [itemKey]: false,
       }))
+    }
+  }
+
+  const handleCancelOrder = async () => {
+    const trimmedReason = cancelReason.trim()
+    if (!orderDetail?.orderId || !user?.userId || !trimmedReason) {
+      toast.error('Vui lòng nhập lý do hủy đơn hàng.')
+      return
+    }
+
+    setIsCancellingOrder(true)
+
+    try {
+      const result = await cancelOrderRequest({
+        orderId: orderDetail.orderId,
+        userId: user.userId,
+        reason: trimmedReason,
+      })
+      setOrderDetail((currentOrder) => currentOrder
+        ? {
+            ...currentOrder,
+            status: result?.status ?? 'CANCELLED',
+          }
+        : currentOrder)
+      setIsCancelFormOpen(false)
+      setCancelReason('')
+      toast.success('Đơn hàng đã được hủy. Email thông báo sẽ được gửi đến khách hàng.')
+      await loadOrderDetail({ silent: true })
+    } catch (error) {
+      toast.error(error.message)
+    } finally {
+      setIsCancellingOrder(false)
     }
   }
 
@@ -269,8 +349,13 @@ const OrderDetail = () => {
                         <article key={itemKey} className="rounded-[1.75rem] border border-border bg-secondary/25 p-5">
                           <div className="flex flex-col gap-4 md:flex-row">
                             <div className="h-28 w-28 shrink-0 overflow-hidden rounded-[1.5rem] bg-secondary">
-                              {item.imageUrl ? (
-                                <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
+                              {item.imageUrl && !failedImageItemKeys.has(itemKey) ? (
+                                <img
+                                  src={item.imageUrl}
+                                  alt={item.name}
+                                  className="h-full w-full object-cover"
+                                  onError={() => markItemImageFailed(itemKey)}
+                                />
                               ) : (
                                 <div className="flex h-full items-center justify-center text-xs uppercase tracking-[0.2em] text-muted-foreground">
                                   Chưa có ảnh
@@ -430,6 +515,56 @@ const OrderDetail = () => {
                   <ReceiptText size={16} />
                   Xem trạng thái thanh toán
                 </Link>
+
+                {canCancelOrder ? (
+                  <div className="mt-5 border-t border-border pt-5">
+                    {isCancelFormOpen ? (
+                      <div className="space-y-3">
+                        <textarea
+                          value={cancelReason}
+                          onChange={(event) => setCancelReason(event.target.value)}
+                          rows={3}
+                          placeholder="Lý do hủy đơn hàng"
+                          className="w-full resize-none rounded-[1.5rem] border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring"
+                        />
+                        <div className="flex flex-wrap gap-3">
+                          <button
+                            type="button"
+                            onClick={handleCancelOrder}
+                            disabled={isCancellingOrder}
+                            className={`inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold uppercase tracking-[0.18em] transition ${
+                              isCancellingOrder
+                                ? 'cursor-not-allowed bg-rose-200 text-rose-700'
+                                : 'bg-rose-600 text-white hover:bg-rose-700'
+                            }`}
+                          >
+                            {isCancellingOrder ? <LoaderCircle size={16} className="animate-spin" /> : <XCircle size={16} />}
+                            Xác nhận hủy
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsCancelFormOpen(false)
+                              setCancelReason('')
+                            }}
+                            className="inline-flex items-center rounded-full border border-border px-5 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-foreground transition hover:border-foreground"
+                          >
+                            Đóng
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setIsCancelFormOpen(true)}
+                        className="inline-flex items-center gap-2 rounded-full border border-rose-200 px-5 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-rose-700 transition hover:border-rose-400 hover:bg-rose-50"
+                      >
+                        <XCircle size={16} />
+                        Hủy đơn hàng
+                      </button>
+                    )}
+                  </div>
+                ) : null}
               </div>
             ) : null}
           </div>

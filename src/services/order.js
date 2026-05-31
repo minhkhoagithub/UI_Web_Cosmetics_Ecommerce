@@ -26,3 +26,14 @@ export const placeOrderRequest = async (payload) => {
     'Không thể tạo đơn hàng. Vui lòng kiểm tra lại thông tin.',
   )
 }
+
+export const cancelOrderRequest = async ({ orderId, userId, reason }) => {
+  return apiRequest(
+    `/v1/orders/${orderId}/cancel`,
+    {
+      method: 'POST',
+      body: { userId, reason },
+    },
+    'Khong the huy don hang luc nay.',
+  )
+}

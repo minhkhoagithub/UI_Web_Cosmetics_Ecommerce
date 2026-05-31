@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowLeft, ExternalLink, LoaderCircle, RefreshCcw, ShieldCheck } from 'lucide-react'
+import { ArrowLeft, ExternalLink, LoaderCircle, RefreshCcw, ShieldCheck, XCircle } from 'lucide-react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
+import { useAuth } from '../../context/AuthProvider'
+import { cancelOrderRequest } from '../../services/order'
 import { createPaymentRequest, getPaymentByOrderRequest } from '../../services/payment'
+import { getActiveShopperId } from '../../services/shopper'
 import {
   formatCurrency,
   formatPaymentStatusLabel,
@@ -13,6 +16,7 @@ const OPENED_PAYMENT_KEY_PREFIX = 'cosmetics-shop.payment-window'
 
 const PaymentStatus = () => {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [searchParams] = useSearchParams()
   const orderId = searchParams.get('orderId')
   const orderNo = searchParams.get('orderNo')
@@ -26,12 +30,17 @@ const PaymentStatus = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [isRetrying, setIsRetrying] = useState(false)
+  const [isCancelFormOpen, setIsCancelFormOpen] = useState(false)
+  const [cancelReason, setCancelReason] = useState('')
+  const [isCancellingOrder, setIsCancellingOrder] = useState(false)
+  const [isOrderCancelled, setIsOrderCancelled] = useState(false)
   const pollingTimerRef = useRef(null)
   const callbackToastRef = useRef('')
 
   const shouldPoll =
     payment?.transactionStatus === 'PENDING' &&
     payment?.orderPaymentStatus !== 'PAID' &&
+    !isOrderCancelled &&
     method !== 'COD'
 
   const loadPaymentStatus = async ({ silent = false } = {}) => {
@@ -50,6 +59,7 @@ const PaymentStatus = () => {
       setPayment({
         transactionId: response.transactionId,
         orderId: response.orderId,
+        orderStatus: response.orderStatus,
         transactionRef: response.transactionRef,
         transactionStatus: response.status ?? response.transactionStatus,
         orderPaymentStatus: response.orderPaymentStatus,
@@ -57,6 +67,7 @@ const PaymentStatus = () => {
         paymentInfo: response.paymentInfo ?? {},
         amount: response.amount,
       })
+      setIsOrderCancelled(response.orderStatus === 'CANCELLED')
     } catch (error) {
       toast.error(error.message)
     } finally {
@@ -116,7 +127,7 @@ const PaymentStatus = () => {
   }, [shouldPoll])
 
   useEffect(() => {
-    if (method !== 'VNPAY' || !payment?.paymentRedirectUrl || !orderId || callbackSource === 'vnpay-return') {
+    if (isOrderCancelled || method !== 'VNPAY' || !payment?.paymentRedirectUrl || !orderId || callbackSource === 'vnpay-return') {
       return
     }
 
@@ -130,7 +141,7 @@ const PaymentStatus = () => {
       window.sessionStorage.setItem(storageKey, 'opened')
       toast.success('Đã mở cổng thanh toán VNPAY ở tab mới.')
     }
-  }, [method, orderId, payment?.paymentRedirectUrl, callbackSource])
+  }, [isOrderCancelled, method, orderId, payment?.paymentRedirectUrl, callbackSource])
 
   const handleRefresh = async () => {
     await loadPaymentStatus({ silent: true })
@@ -149,12 +160,14 @@ const PaymentStatus = () => {
         ...previousPayment,
         transactionId: recreatedPayment.transactionId,
         transactionRef: recreatedPayment.transactionRef,
+        orderStatus: recreatedPayment.orderStatus,
         transactionStatus: recreatedPayment.status,
         orderPaymentStatus: recreatedPayment.orderPaymentStatus,
         paymentRedirectUrl: recreatedPayment.paymentRedirectUrl,
         paymentInfo: recreatedPayment.paymentInfo ?? {},
         amount: recreatedPayment.amount,
       }))
+      setIsOrderCancelled(recreatedPayment.orderStatus === 'CANCELLED')
 
       if (recreatedPayment.paymentRedirectUrl) {
         window.open(recreatedPayment.paymentRedirectUrl, '_blank', 'noopener,noreferrer')
@@ -168,18 +181,56 @@ const PaymentStatus = () => {
     }
   }
 
-  const resolvedStatus = payment?.orderPaymentStatus === 'PAID' ? 'PAID' : payment?.transactionStatus ?? 'PENDING'
+  const handleCancelOrder = async () => {
+    const trimmedReason = cancelReason.trim()
+    if (!orderId || !trimmedReason) {
+      toast.error('Vui lòng nhập lý do hủy đơn hàng.')
+      return
+    }
+
+    const shopperId = getActiveShopperId(user?.userId)
+    setIsCancellingOrder(true)
+
+    try {
+      await cancelOrderRequest({
+        orderId,
+        userId: shopperId,
+        reason: trimmedReason,
+      })
+      setIsOrderCancelled(true)
+      setIsCancelFormOpen(false)
+      setCancelReason('')
+      toast.success('Đơn hàng đã được hủy. Email thông báo sẽ được gửi đến khách hàng.')
+    } catch (error) {
+      toast.error(error.message)
+    } finally {
+      setIsCancellingOrder(false)
+    }
+  }
+
+  const resolvedStatus = isOrderCancelled
+    ? 'CANCELLED'
+    : payment?.orderPaymentStatus === 'PAID'
+      ? 'PAID'
+      : payment?.transactionStatus ?? 'PENDING'
   const paymentInfo = payment?.paymentInfo ?? {}
-  const showQrBlock = method === 'SEPAY' && paymentInfo.qrUrl
-  const showRetryButton = ['FAILED', 'CANCELLED', 'EXPIRED'].includes(payment?.transactionStatus)
+  const showQrBlock = !isOrderCancelled && method === 'SEPAY' && paymentInfo.qrUrl
+  const showRetryButton = !isOrderCancelled && ['FAILED', 'CANCELLED', 'EXPIRED'].includes(payment?.transactionStatus)
+  const canCancelOrder = !isOrderCancelled && payment?.orderPaymentStatus !== 'PAID'
   const headline =
-    method === 'COD'
+    isOrderCancelled
+      ? 'Đơn hàng đã được hủy'
+      : method === 'COD'
       ? 'Đơn hàng của bạn đã được ghi nhận'
       : payment?.orderPaymentStatus === 'PAID'
         ? 'Thanh toán đã hoàn tất'
         : 'Đang chờ hoàn tất thanh toán'
 
   const helperText = useMemo(() => {
+    if (isOrderCancelled) {
+      return 'Yêu cầu hủy đơn đã được ghi nhận. Hệ thống đã hoàn tồn kho và gửi email thông báo cho khách hàng.'
+    }
+
     if (method === 'COD') {
       return 'Bạn sẽ thanh toán khi nhận hàng. Đội ngũ vận hành sẽ xử lý đơn của bạn sớm nhất có thể.'
     }
@@ -193,7 +244,7 @@ const PaymentStatus = () => {
     }
 
     return 'Nếu tab thanh toán chưa mở, bạn có thể dùng nút bên dưới để mở lại cổng thanh toán. Trang này sẽ tự động cập nhật khi hệ thống nhận phản hồi thanh toán.'
-  }, [method, payment?.orderPaymentStatus])
+  }, [isOrderCancelled, method, payment?.orderPaymentStatus])
 
   if (!orderId) {
     return <Navigate to="/" replace />
@@ -294,7 +345,7 @@ const PaymentStatus = () => {
                     Làm mới trạng thái
                   </button>
 
-                  {method === 'VNPAY' && payment?.paymentRedirectUrl ? (
+                  {!isOrderCancelled && method === 'VNPAY' && payment?.paymentRedirectUrl ? (
                     <button
                       type="button"
                       onClick={() => window.open(payment.paymentRedirectUrl, '_blank', 'noopener,noreferrer')}
@@ -320,7 +371,55 @@ const PaymentStatus = () => {
                       Tạo lại thanh toán
                     </button>
                   ) : null}
+
+                  {canCancelOrder && !isCancelFormOpen ? (
+                    <button
+                      type="button"
+                      onClick={() => setIsCancelFormOpen(true)}
+                      className="inline-flex items-center gap-2 rounded-full border border-rose-200 px-5 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-rose-700 transition hover:border-rose-400 hover:bg-rose-50"
+                    >
+                      <XCircle size={16} />
+                      Hủy đơn hàng
+                    </button>
+                  ) : null}
                 </div>
+
+                {canCancelOrder && isCancelFormOpen ? (
+                  <div className="mt-5 space-y-3 border-t border-border pt-5">
+                    <textarea
+                      value={cancelReason}
+                      onChange={(event) => setCancelReason(event.target.value)}
+                      rows={3}
+                      placeholder="Lý do hủy đơn hàng"
+                      className="w-full resize-none rounded-[1.5rem] border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring"
+                    />
+                    <div className="flex flex-wrap gap-3">
+                      <button
+                        type="button"
+                        onClick={handleCancelOrder}
+                        disabled={isCancellingOrder}
+                        className={`inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold uppercase tracking-[0.18em] transition ${
+                          isCancellingOrder
+                            ? 'cursor-not-allowed bg-rose-200 text-rose-700'
+                            : 'bg-rose-600 text-white hover:bg-rose-700'
+                        }`}
+                      >
+                        {isCancellingOrder ? <LoaderCircle size={16} className="animate-spin" /> : <XCircle size={16} />}
+                        Xác nhận hủy
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsCancelFormOpen(false)
+                          setCancelReason('')
+                        }}
+                        className="inline-flex items-center rounded-full border border-border px-5 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-foreground transition hover:border-foreground"
+                      >
+                        Đóng
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
               </>
             )}
           </div>
