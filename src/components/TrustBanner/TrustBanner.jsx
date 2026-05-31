@@ -3,23 +3,23 @@ import { motion } from "framer-motion";
 const features = [
     {
         icon: Truck,
-        title: "Free Shipping",
-        desc: "On orders over $200"
+        title: "Miễn phí vận chuyển",
+        desc: "Cho đơn hàng đạt điều kiện"
     },
     {
         icon: Shield,
-        title: "Secure Payment",
-        desc: "100% protected checkout"
+        title: "Thanh toán an toàn",
+        desc: "Thông tin luôn được bảo vệ"
     },
     {
         icon: RotateCcw,
-        title: "Easy Returns",
-        desc: "30-day return policy"
+        title: "Đổi trả dễ dàng",
+        desc: "Hỗ trợ đổi trả theo chính sách"
     },
     {
         icon: Headphones,
-        title: "24/7 Support",
-        desc: "Dedicated customer care"
+        title: "Hỗ trợ 24/7",
+        desc: "Luôn sẵn sàng tư vấn"
     },
 ]
 

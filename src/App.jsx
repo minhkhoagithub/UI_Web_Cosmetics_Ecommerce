@@ -1,30 +1,47 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { Toaster } from 'sonner'
-import CartProvider  from './context/CartProvider'
 import Navbar from './components/Navbar/Navbar'
 import Footer from './components/Footer/Footer'
-import Index from './page/index'
+import ChatAgent from './components/ChatAgent/ChatAgent'
+import CustomerChatWidget from './components/CustomerChatWidget/CustomerChatWidget'
+import { AuthProvider } from './context/AuthProvider'
+import CartProvider from './context/CartProvider'
+import Index from './page/index/Index'
+import Login from './page/login/Login'
 import NotFound from './page/not_found/NotFound'
+import OrderDetail from './page/order_detail/OrderDetail'
+import OrderHistory from './page/order_history/OrderHistory'
+import PaymentResult from './page/payment_result/PaymentResult'
+import PaymentStatus from './page/payment_status/PaymentStatus'
+import Profile from './page/profile/Profile'
+import Register from './page/register/Register'
 
 function App() {
   return (
-    <>
-      <CartProvider>
-        <Toaster />
-        <BrowserRouter>
-          {/* NAVBAR  */}
+    <BrowserRouter>
+      <AuthProvider>
+        <CartProvider>
+          <Toaster />
           <Navbar />
 
           <Routes>
             <Route index element={<Index />} />
+            <Route path="login" element={<Login />} />
+            <Route path="register" element={<Register />} />
+            <Route path="profile" element={<Profile />} />
+            <Route path="order-history" element={<OrderHistory />} />
+            <Route path="order-history/:orderId" element={<OrderDetail />} />
+            <Route path="payment-result" element={<PaymentResult />} />
+            <Route path="payment-status" element={<PaymentStatus />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
 
-          {/* FOOTER  */}
           <Footer />
-        </BrowserRouter>
-      </CartProvider>
-    </>
+          <ChatAgent />
+          <CustomerChatWidget />
+        </CartProvider>
+      </AuthProvider>
+    </BrowserRouter>
   )
 }
 

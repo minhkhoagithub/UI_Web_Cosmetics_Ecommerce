@@ -8,7 +8,7 @@ const HeroBanner = () => {
             <img
                 src={heroBanner}
                 className='w-full h-full object-cover'
-                alt="E-Shop Fashion collection"
+                alt="Bộ sưu tập mỹ phẩm E-Shop"
             />
             <div className="absolute inset-0 bg-foreground/50"></div>
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
@@ -16,22 +16,23 @@ const HeroBanner = () => {
                 initial={{opacity: 0, y: 20}}
                 animate={{opacity: 1, y: 0}}
                 className='text-primary-foreground/70 font-body text-sm tracking-[0.3em] uppercase mb-4'>
-                    New Collection 2026
+                    Bộ sưu tập mới 2026
                 </motion.p>
                 
                 <motion.h2 className="font-display text-4xl md:text-6xl lg:text-7xl text-primary-foreground font-semibold mb-6">
-                    Redefine Your Style
+                    Tỏa sáng theo cách của bạn
                 </motion.h2>
-                <motion.button
+                <motion.a
                 initial={{opacity: 0, y: 20}}
                 animate={{opacity:1 , y: 0}}
                 transition={{delay: 0.6}}
                 whileHover={{scale: 1.05}}
                 whileTap={{scale: 0.95}}
+                href="#product"
                 className='bg-primary-foreground text-primary font-body text-sm tracking-widest uppercase px-10 py-4 hover:bg-accent hover:text-accent-foreground transition-colors duration-300 cursor-pointer'
                 >
-                    Explore Now
-                </motion.button>
+                    Khám phá ngay
+                </motion.a>
             </div>
         </section>
     );
