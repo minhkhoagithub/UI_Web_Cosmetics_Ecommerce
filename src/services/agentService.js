@@ -21,7 +21,7 @@ const resolveAgentEndpoint = () => {
     return `${apiOrigin}/api/agent/message`
   }
 
-  return 'http://localhost:8080/api/agent/message'
+  return '/api/agent/message'
 }
 
 const AGENT_ENDPOINT = resolveAgentEndpoint()

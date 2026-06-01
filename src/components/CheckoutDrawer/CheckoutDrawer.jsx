@@ -642,21 +642,22 @@ const CheckoutDrawer = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="overlay-backdrop"
+            className="fixed inset-0 z-[10000] bg-foreground/40 backdrop-blur-sm"
             onClick={handleClose}
           />
 
-          <MotionAside
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 26, stiffness: 260 }}
-            className="fixed right-0 top-0 z-50 flex h-full w-full max-w-2xl flex-col bg-background shadow-2xl"
-          >
-            <div className="flex items-center justify-between border-b border-border px-6 py-5">
+          <div className="pointer-events-none fixed inset-0 z-[10001] flex items-center justify-center p-3 sm:p-6">
+            <MotionAside
+              initial={{ opacity: 0, scale: 0.96, y: 24 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.98, y: 16 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 260 }}
+              className="pointer-events-auto flex h-[860px] max-h-[calc(100vh-1.5rem)] w-full max-w-6xl flex-col overflow-hidden rounded-2xl bg-background shadow-2xl sm:max-h-[calc(100vh-3rem)]"
+            >
+            <div className="flex items-center justify-between border-b border-border px-5 py-4 sm:px-6 sm:py-5">
               <div>
                 <p className="text-xs uppercase tracking-[0.28em] text-muted-foreground">Thanh toán an toàn</p>
-                <h2 className="font-display text-2xl font-semibold text-foreground">Hoàn tất đơn hàng</h2>
+                <h2 className="text-2xl font-semibold text-foreground">Hoàn tất đơn hàng</h2>
               </div>
 
               <button
@@ -669,13 +670,13 @@ const CheckoutDrawer = () => {
               </button>
             </div>
 
-            <div className="grid flex-1 gap-0 overflow-hidden lg:grid-cols-[1.2fr_0.8fr]">
-              <form id="checkout-form" onSubmit={handleCheckout} className="overflow-y-auto px-6 py-6">
+            <div className="grid flex-1 gap-0 overflow-y-auto lg:grid-cols-[1.15fr_0.85fr] lg:overflow-hidden">
+              <form id="checkout-form" onSubmit={handleCheckout} className="px-5 py-5 sm:px-6 sm:py-6 lg:overflow-y-auto">
                 <div className="space-y-6">
                   <section className="space-y-4">
                     <div>
                       <p className="text-xs uppercase tracking-[0.28em] text-muted-foreground">Giao hàng</p>
-                      <h3 className="mt-2 font-display text-xl font-semibold text-foreground">Thông tin người nhận</h3>
+                      <h3 className="mt-2 text-xl font-semibold text-foreground">Thông tin người nhận</h3>
                     </div>
 
                     {user?.userId ? (
@@ -838,7 +839,7 @@ const CheckoutDrawer = () => {
                   <section className="space-y-4">
                     <div>
                       <p className="text-xs uppercase tracking-[0.28em] text-muted-foreground">Vận chuyển</p>
-                      <h3 className="mt-2 font-display text-xl font-semibold text-foreground">Tính phí vận chuyển tự động</h3>
+                      <h3 className="mt-2 text-xl font-semibold text-foreground">Tính phí vận chuyển tự động</h3>
                     </div>
 
                     <div className="grid gap-4 sm:grid-cols-2">
@@ -949,7 +950,7 @@ const CheckoutDrawer = () => {
                   <section className="space-y-4">
                     <div>
                       <p className="text-xs uppercase tracking-[0.28em] text-muted-foreground">Thanh toán</p>
-                      <h3 className="mt-2 font-display text-xl font-semibold text-foreground">Chọn phương thức phù hợp</h3>
+                      <h3 className="mt-2 text-xl font-semibold text-foreground">Chọn phương thức phù hợp</h3>
                     </div>
 
                     <div className="space-y-3">
@@ -984,7 +985,7 @@ const CheckoutDrawer = () => {
                 </div>
               </form>
 
-              <div className="border-t border-border bg-secondary/45 px-6 py-6 lg:border-l lg:border-t-0">
+              <div className="border-t border-border bg-secondary/45 px-5 py-5 sm:px-6 sm:py-6 lg:overflow-y-auto lg:border-l lg:border-t-0">
                 <p className="text-xs uppercase tracking-[0.28em] text-muted-foreground">Đơn hàng của bạn</p>
                 <div className="mt-5 space-y-4">
                   {items.map((item) => (
@@ -1058,7 +1059,7 @@ const CheckoutDrawer = () => {
                   </div>
                   <div className="flex items-center justify-between border-t border-border pt-3">
                     <span className="font-semibold text-foreground">Tổng cộng</span>
-                    <span className="font-display text-2xl font-semibold text-foreground">{formatCurrency(grandTotal)}</span>
+                    <span className="text-2xl font-semibold text-foreground">{formatCurrency(grandTotal)}</span>
                   </div>
                 </div>
 
@@ -1081,7 +1082,8 @@ const CheckoutDrawer = () => {
                 </p>
               </div>
             </div>
-          </MotionAside>
+            </MotionAside>
+          </div>
         </>
       ) : null}
     </AnimatePresence>
