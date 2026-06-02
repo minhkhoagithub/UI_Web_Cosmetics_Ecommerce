@@ -13,12 +13,25 @@ import CheckoutDrawer from '../../components/CheckoutDrawer/CheckoutDrawer';
 
 const Index = () => {
     const [selectedProduct, setSelectedProduct] = useState(null); // initial value = null;
+    const [activeProductFilter, setActiveProductFilter] = useState('all');
+
+    const handleExploreProducts = (filterKey) => {
+        setActiveProductFilter(filterKey || 'all');
+        requestAnimationFrame(() => {
+            document.getElementById('product')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    };
+
     return (
         <div className='bg-background'>
             <HeroBanner />
             <TrustBanner />
-            <CategoryBanner />
-            <Products setSelectedProduct={setSelectedProduct} />
+            <CategoryBanner onExplore={handleExploreProducts} />
+            <Products
+                setSelectedProduct={setSelectedProduct}
+                activeFilter={activeProductFilter}
+                onFilterChange={setActiveProductFilter}
+            />
 
             {/* PRODUCT MODAL  */}
             {
