@@ -26,7 +26,6 @@ const Login = () => {
     try {
       await login({ identifier, password, remember })
       toast.success('Đăng nhập thành công.')
-      event.currentTarget.reset()
       navigate('/', { replace: true })
     } catch (error) {
       toast.error(error.message)

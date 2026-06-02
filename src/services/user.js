@@ -1,7 +1,18 @@
 import { apiRequest, buildQueryString } from './http'
+import { normalizeMediaUrl } from './media'
+
+const normalizeUserProfile = (profile) => (
+  profile
+    ? {
+        ...profile,
+        avatarUrl: normalizeMediaUrl(profile.avatarUrl),
+      }
+    : profile
+)
 
 export const getCurrentUserProfileRequest = async () => {
-  return apiRequest('/v1/users/profile', {}, 'Không thể tải thông tin tài khoản hiện tại.')
+  const profile = await apiRequest('/v1/users/profile', {}, 'Không thể tải thông tin tài khoản hiện tại.')
+  return normalizeUserProfile(profile)
 }
 
 export const getAddressesRequest = async ({ userId }) => {
@@ -35,6 +46,7 @@ export const updateUserProfileRequest = async ({
   email,
   phone,
   fullName,
+  avatar,
   avatarFile,
 }) => {
   const formData = new FormData()
@@ -43,11 +55,15 @@ export const updateUserProfileRequest = async ({
   formData.append('phone', phone)
   formData.append('fullName', fullName)
 
+  if (avatar) {
+    formData.append('avatar', avatar)
+  }
+
   if (avatarFile) {
     formData.append('avatarFile', avatarFile)
   }
 
-  return apiRequest(
+  const profile = await apiRequest(
     '/v1/users/profile',
     {
       method: 'PUT',
@@ -56,6 +72,8 @@ export const updateUserProfileRequest = async ({
     },
     'Không thể cập nhật hồ sơ. Vui lòng thử lại.',
   )
+
+  return normalizeUserProfile(profile)
 }
 
 

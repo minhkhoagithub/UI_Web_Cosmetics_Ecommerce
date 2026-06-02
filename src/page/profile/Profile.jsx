@@ -15,6 +15,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useAuth } from '../../context/AuthProvider'
+import { normalizeMediaUrl } from '../../services/media'
 import {
   confirmOldEmailChangeRequest,
   createAddressRequest,
@@ -39,7 +40,7 @@ const buildProfileState = (user, response = null) => ({
   email: response?.email ?? user?.email ?? '',
   phone: response?.phone ?? user?.phone ?? '',
   fullName: response?.fullName ?? user?.fullName ?? '',
-  avatarUrl: response?.avatarUrl ?? user?.avatarUrl ?? '',
+  avatarUrl: normalizeMediaUrl(response?.avatarUrl ?? user?.avatarUrl),
   role: response?.role ?? user?.role ?? '',
   isActive: response?.isActive ?? true,
 })
@@ -157,6 +158,8 @@ const Profile = () => {
   const [editingAddressId, setEditingAddressId] = useState(null)
   const [addressForm, setAddressForm] = useState(() => buildEmptyAddressForm(buildProfileState(user)))
   const [isAddressSubmitting, setIsAddressSubmitting] = useState(false)
+  const [selectedAvatarFile, setSelectedAvatarFile] = useState(null)
+  const [failedAvatarUrl, setFailedAvatarUrl] = useState('')
 
   useEffect(() => {
     setAddresses(readAddressCache(user?.userId))
@@ -237,6 +240,7 @@ const Profile = () => {
     const source = profile.fullName?.trim() || profile.email?.trim() || 'U'
     return source.charAt(0).toUpperCase()
   }, [profile.email, profile.fullName])
+  const profileAvatarUrl = normalizeMediaUrl(profileForm.avatarUrl)
 
   const activeUserId = user?.userId ?? profile.id
 
@@ -285,6 +289,12 @@ const Profile = () => {
 
   const handleProfileFieldChange = (event) => {
     const { name, value } = event.target
+
+    if (name === 'avatarUrl') {
+      setSelectedAvatarFile(null)
+      setFailedAvatarUrl('')
+    }
+
     setProfileForm((currentForm) => ({
       ...currentForm,
       [name]: value,
@@ -304,6 +314,9 @@ const Profile = () => {
       return
     }
 
+    setSelectedAvatarFile(selectedFile)
+    setFailedAvatarUrl('')
+
     const reader = new FileReader()
 
     reader.onload = () => {
@@ -316,6 +329,7 @@ const Profile = () => {
     }
 
     reader.onerror = () => {
+      setSelectedAvatarFile(null)
       toast.error('Không thể đọc tệp hình ảnh đã chọn.')
     }
 
@@ -332,10 +346,13 @@ const Profile = () => {
         email: profile.email,
         fullName: profileForm.fullName.trim(),
         phone: profileForm.phone.trim(),
-        avatar: profileForm.avatarUrl.trim(),
+        avatar: selectedAvatarFile ? '' : profileForm.avatarUrl.trim(),
+        avatarFile: selectedAvatarFile,
       })
 
       const nextProfile = applyProfileResponse(response)
+      setSelectedAvatarFile(null)
+      setFailedAvatarUrl('')
       toast.success('Thông tin cá nhân đã được cập nhật.')
 
       if (!editingAddressId) {
@@ -374,7 +391,6 @@ const Profile = () => {
         email: normalizedEmail,
         fullName: profile.fullName,
         phone: profile.phone,
-        avatar: profile.avatarUrl,
       })
     } catch (error) {
       if (isExpectedEmailOtpMessage(error.message)) {
@@ -581,8 +597,13 @@ const Profile = () => {
 
                 <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
                   <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-[2rem] bg-foreground text-3xl font-display font-semibold text-primary-foreground">
-                    {profileForm.avatarUrl ? (
-                      <img src={profileForm.avatarUrl} alt={profile.fullName || profile.email} className="h-full w-full object-cover" />
+                    {profileAvatarUrl && profileAvatarUrl !== failedAvatarUrl ? (
+                      <img
+                        src={profileAvatarUrl}
+                        alt={profile.fullName || profile.email}
+                        className="h-full w-full object-cover"
+                        onError={() => setFailedAvatarUrl(profileAvatarUrl)}
+                      />
                     ) : (
                       avatarLabel
                     )}

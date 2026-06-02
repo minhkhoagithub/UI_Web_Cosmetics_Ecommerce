@@ -54,7 +54,8 @@ const Register = () => {
   const handleSubmit = async (event) => {
     event.preventDefault()
 
-    const formData = new FormData(event.currentTarget)
+    const form = event.currentTarget
+    const formData = new FormData(form)
     const fullName = formData.get('fullName')?.toString().trim()
     const phone = formData.get('phone')?.toString().trim()
     const email = formData.get('email')?.toString().trim()
@@ -70,7 +71,7 @@ const Register = () => {
       setOtpCode('')
       setRegistrationMessage(`Tài khoản đã được tạo. Mã OTP kích hoạt đã được gửi tới ${email}.`)
       toast.success('Đăng ký thành công. Vui lòng nhập OTP từ email để kích hoạt tài khoản.')
-      event.currentTarget.reset()
+      form.reset()
       setPassword('')
       setConfirmPassword('')
     } catch (error) {
