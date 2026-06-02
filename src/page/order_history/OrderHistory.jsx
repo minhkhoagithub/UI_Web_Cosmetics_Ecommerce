@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import { useAuth } from '../../context/AuthProvider'
 import { getMyOrderHistoryRequest } from '../../services/order'
 import { readOrderHistory } from '../../services/orderHistory'
-import { formatCurrency, formatPaymentStatusLabel, getPaymentStatusTone } from '../../utils/format'
+import { formatCurrency } from '../../utils/format'
 
 const mergeOrderHistory = (serverEntries = [], localEntries = []) => {
   const entryMap = new Map()
@@ -32,39 +32,6 @@ const mergeOrderHistory = (serverEntries = [], localEntries = []) => {
   return [...entryMap.values()].sort(
     (left, right) => new Date(right.createdAt ?? 0).getTime() - new Date(left.createdAt ?? 0).getTime(),
   )
-}
-
-const formatOrderStatusLabel = (status) => {
-  switch (status) {
-    case 'CREATED':
-      return 'Mới tạo'
-    case 'CONFIRMED':
-      return 'Đã xác nhận'
-    case 'SHIPPING':
-      return 'Đang giao'
-    case 'COMPLETED':
-      return 'Hoàn tất'
-    case 'CANCELLED':
-      return 'Đã hủy'
-    default:
-      return status ?? 'Đang cập nhật'
-  }
-}
-
-const getOrderStatusTone = (status) => {
-  switch (status) {
-    case 'COMPLETED':
-      return 'bg-emerald-100 text-emerald-700'
-    case 'CANCELLED':
-      return 'bg-rose-100 text-rose-700'
-    case 'CONFIRMED':
-      return 'bg-sky-100 text-sky-700'
-    case 'SHIPPING':
-      return 'bg-blue-100 text-blue-700'
-    case 'CREATED':
-    default:
-      return 'bg-amber-100 text-amber-700'
-  }
 }
 
 const formatOrderDate = (value) => {
@@ -175,18 +142,6 @@ const OrderHistory = () => {
                     <div className="text-left md:text-right">
                       <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Tổng tiền</p>
                       <p className="mt-2 text-xl font-semibold text-foreground">{formatCurrency(order.totalAmount ?? 0)}</p>
-                      <div className="mt-3 flex flex-wrap gap-2 md:justify-end">
-                        {order.status ? (
-                          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${getOrderStatusTone(order.status)}`}>
-                            {formatOrderStatusLabel(order.status)}
-                          </span>
-                        ) : null}
-                        {order.paymentStatus ? (
-                          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${getPaymentStatusTone(order.paymentStatus)}`}>
-                            {formatPaymentStatusLabel(order.paymentStatus)}
-                          </span>
-                        ) : null}
-                      </div>
                     </div>
                   </div>
 

@@ -15,39 +15,6 @@ const DEFAULT_REVIEW_FORM = {
 
 const REVIEWABLE_ORDER_STATUSES = new Set(['CREATED', 'COMPLETED'])
 
-const formatOrderStatusLabel = (status) => {
-  switch (status) {
-    case 'CREATED':
-      return 'Mới tạo'
-    case 'CONFIRMED':
-      return 'Đã xác nhận'
-    case 'SHIPPING':
-      return 'Đang giao'
-    case 'COMPLETED':
-      return 'Hoàn tất'
-    case 'CANCELLED':
-      return 'Đã hủy'
-    default:
-      return status ?? 'Đang cập nhật'
-  }
-}
-
-const getOrderStatusTone = (status) => {
-  switch (status) {
-    case 'COMPLETED':
-      return 'bg-emerald-100 text-emerald-700'
-    case 'CANCELLED':
-      return 'bg-rose-100 text-rose-700'
-    case 'CONFIRMED':
-      return 'bg-sky-100 text-sky-700'
-    case 'SHIPPING':
-      return 'bg-blue-100 text-blue-700'
-    case 'CREATED':
-    default:
-      return 'bg-amber-100 text-amber-700'
-  }
-}
-
 const formatOrderDate = (value) => {
   if (!value) {
     return 'Đang cập nhật'
@@ -307,9 +274,6 @@ const OrderDetail = () => {
                   </div>
 
                   <div className="flex flex-wrap gap-2">
-                    <span className={`rounded-full px-4 py-2 text-sm font-semibold ${getOrderStatusTone(orderDetail.status)}`}>
-                      {formatOrderStatusLabel(orderDetail.status)}
-                    </span>
                     <span className={`rounded-full px-4 py-2 text-sm font-semibold ${getPaymentStatusTone(paymentStatus)}`}>
                       {formatPaymentStatusLabel(paymentStatus)}
                     </span>

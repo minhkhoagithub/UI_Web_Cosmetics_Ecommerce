@@ -1,10 +1,11 @@
-import { motion } from 'framer-motion'
+import { motion as Motion } from 'framer-motion'
 import { ChevronDown, Heart, LogOut, ReceiptText, Search, ShoppingBag, User, UserRound } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthProvider'
 import { useCart } from '../../context/CartProvider'
+import { normalizeMediaUrl } from '../../services/media'
 
 const Navbar = () => {
   const { pathname } = useLocation()
@@ -12,6 +13,7 @@ const Navbar = () => {
   const { setIsCartOpen, cartItemCount, setIsSearchOpen } = useCart()
   const { isAuthenticated, isLoggingOut, logout, user } = useAuth()
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  const [failedAvatarUrl, setFailedAvatarUrl] = useState('')
   const userMenuRef = useRef(null)
   const isAuthPage = pathname === '/login' || pathname === '/register'
 
@@ -22,6 +24,7 @@ const Navbar = () => {
     `hidden rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] transition-colors sm:inline-flex ${isActive ? 'border-foreground bg-foreground text-primary-foreground' : 'border-border text-foreground hover:border-foreground'}`
 
   const displayName = useMemo(() => user?.fullName?.trim() || user?.email || 'Tài khoản', [user?.email, user?.fullName])
+  const avatarUrl = normalizeMediaUrl(user?.avatarUrl)
 
   useEffect(() => {
     if (!isUserMenuOpen) {
@@ -107,8 +110,17 @@ const Navbar = () => {
                     aria-expanded={isUserMenuOpen}
                   >
                     <span className="hidden max-w-40 truncate font-medium text-foreground lg:inline-flex">{displayName}</span>
-                    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary text-foreground">
-                      <UserRound size={18} />
+                    <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-secondary text-foreground">
+                      {avatarUrl && avatarUrl !== failedAvatarUrl ? (
+                        <img
+                          src={avatarUrl}
+                          alt={displayName}
+                          className="h-full w-full object-cover"
+                          onError={() => setFailedAvatarUrl(avatarUrl)}
+                        />
+                      ) : (
+                        <UserRound size={18} />
+                      )}
                     </span>
                     <ChevronDown size={16} className={`hidden text-muted-foreground transition-transform lg:inline-flex ${isUserMenuOpen ? 'rotate-180' : ''}`} />
                   </button>
@@ -195,13 +207,13 @@ const Navbar = () => {
                 className="relative cursor-pointer text-muted-foreground transition-colors hover:text-foreground"
               >
                 <Heart size={20} />
-                <motion.span
+                <Motion.span
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs font-body font-semibold text-destructive-foreground"
                 >
                   0
-                </motion.span>
+                </Motion.span>
               </button>
 
               <button
@@ -210,13 +222,13 @@ const Navbar = () => {
                 className="relative cursor-pointer text-muted-foreground transition-colors hover:text-foreground"
               >
                 <ShoppingBag size={20} />
-                <motion.span
+                <Motion.span
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-xs font-body font-semibold text-accent-foreground"
                 >
                   {cartItemCount ?? 0}
-                </motion.span>
+                </Motion.span>
               </button>
             </>
           )}
