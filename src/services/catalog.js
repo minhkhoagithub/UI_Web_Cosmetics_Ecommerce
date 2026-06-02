@@ -235,7 +235,11 @@ const mapSemanticReferences = (values = []) =>
 export const searchProducts = async ({ q, typeIds, page = 0, size = 12, sort = 'relevance' } = {}) => {
   return apiRequest(
     `/v1/products/search${buildQueryString({ q, typeIds, page, size, sort })}`,
-    {},
+    {
+      retries: 2,
+      retryDelayMs: 300,
+      timeoutMs: 8000,
+    },
     'Không thể tải danh sách sản phẩm.',
   )
 }
@@ -319,6 +323,7 @@ export const mapSearchItemToCard = (item, detail, promotions = []) => {
     rating: item.averageRating ?? 0,
     reviews: item.reviewCount ?? 0,
     soldCount: item.soldCount ?? 0,
+    tags: detailSelection?.tags ?? [],
     inStock: item.inStock,
     variantCount: item.activeVariantCount ?? 0,
     image: getProductImage(detail) ?? normalizeMediaUrl(item.thumbnailUrl ?? item.imageUrl ?? item.url),

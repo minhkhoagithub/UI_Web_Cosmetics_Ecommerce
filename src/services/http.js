@@ -17,6 +17,17 @@ const resolveApiBaseUrl = () => {
 }
 
 const API_BASE_URL = resolveApiBaseUrl()
+const DEFAULT_RETRY_DELAY_MS = 300
+
+const wait = (durationMs) => new Promise((resolve) => window.setTimeout(resolve, durationMs))
+
+const isRetryableStatus = (status) => status === 408 || status >= 500
+
+const toTimeoutError = () => {
+  const error = new Error('Yêu cầu quá thời gian chờ. Vui lòng thử lại.')
+  error.retryable = true
+  return error
+}
 
 const parseResponseBody = async (response) => {
   if (response.status === 204) {
@@ -109,6 +120,9 @@ export const apiRequest = async (
     headers = {},
     auth = true,
     userId,
+    retries = 0,
+    retryDelayMs = DEFAULT_RETRY_DELAY_MS,
+    timeoutMs = 0,
   } = {},
   fallbackMessage = 'Yêu cầu không thành công. Vui lòng thử lại.',
 ) => {
@@ -130,18 +144,44 @@ export const apiRequest = async (
     resolvedHeaders['X-User-Id'] = userId
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    method,
-    credentials: 'include',
-    headers: resolvedHeaders,
-    body: body instanceof FormData || body === undefined ? body : JSON.stringify(body),
-  })
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    const controller = timeoutMs > 0 ? new AbortController() : null
+    const timeoutId = controller
+      ? window.setTimeout(() => controller.abort(), timeoutMs)
+      : null
 
-  const payload = await parseResponseBody(response)
+    try {
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method,
+        credentials: 'include',
+        headers: resolvedHeaders,
+        body: body instanceof FormData || body === undefined ? body : JSON.stringify(body),
+        signal: controller?.signal,
+      })
 
-  if (!response.ok) {
-    throw new Error(getErrorMessage(payload, fallbackMessage))
+      const payload = await parseResponseBody(response)
+
+      if (!response.ok) {
+        const error = new Error(getErrorMessage(payload, fallbackMessage))
+        error.retryable = isRetryableStatus(response.status)
+        throw error
+      }
+
+      return unwrapSuccessPayload(payload)
+    } catch (error) {
+      const resolvedError = error?.name === 'AbortError' ? toTimeoutError() : error
+      const isNetworkError = resolvedError instanceof TypeError
+      const shouldRetry = resolvedError?.retryable || isNetworkError
+
+      if (!shouldRetry || attempt >= retries) {
+        throw resolvedError
+      }
+
+      await wait(retryDelayMs * (attempt + 1))
+    } finally {
+      if (timeoutId) {
+        window.clearTimeout(timeoutId)
+      }
+    }
   }
-
-  return unwrapSuccessPayload(payload)
 }

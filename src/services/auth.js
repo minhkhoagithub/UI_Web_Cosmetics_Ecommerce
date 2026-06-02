@@ -16,8 +16,38 @@ const resolveApiBaseUrl = () => {
 
 const API_BASE_URL = resolveApiBaseUrl()
 const AUTH_STORAGE_KEY = 'cosmetics-shop.auth'
+const LOGIN_BROWSER_ID_STORAGE_KEY = 'cosmetics-shop.login-browser-id'
 
 const isBrowser = typeof window !== 'undefined'
+let inMemoryLoginBrowserId = null
+
+const createLoginBrowserId = () => {
+  if (isBrowser && typeof window.crypto?.randomUUID === 'function') {
+    return window.crypto.randomUUID()
+  }
+
+  return `browser-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
+}
+
+const getLoginBrowserId = () => {
+  if (!isBrowser) {
+    return ''
+  }
+
+  try {
+    const storedBrowserId = window.localStorage.getItem(LOGIN_BROWSER_ID_STORAGE_KEY)
+    if (storedBrowserId) {
+      return storedBrowserId
+    }
+
+    const nextBrowserId = createLoginBrowserId()
+    window.localStorage.setItem(LOGIN_BROWSER_ID_STORAGE_KEY, nextBrowserId)
+    return nextBrowserId
+  } catch {
+    inMemoryLoginBrowserId ??= createLoginBrowserId()
+    return inMemoryLoginBrowserId
+  }
+}
 
 const decodeTokenPayload = (token) => {
   if (!token) {
@@ -209,12 +239,12 @@ const unwrapSuccessPayload = (payload) => {
 const request = async (endpoint, options = {}, fallbackMessage) => {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     credentials: 'include',
+    ...options,
     headers: {
       Accept: 'application/json',
       ...(options.body ? { 'Content-Type': 'application/json' } : {}),
       ...(options.headers ?? {}),
     },
-    ...options,
   })
 
   const payload = await parseResponseBody(response)
@@ -232,6 +262,9 @@ export const loginRequest = async ({ identifier, password }) => {
     {
       method: 'POST',
       body: JSON.stringify({ identifier, password }),
+      headers: {
+        'X-Browser-Id': getLoginBrowserId(),
+      },
     },
     'Đăng nhập thất bại. Vui lòng thử lại.',
   )

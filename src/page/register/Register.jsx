@@ -8,12 +8,38 @@ import { useAuth } from '../../context/AuthProvider'
 const inputClassName =
   'w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring'
 
+const EMAIL_ALREADY_USED_MESSAGE = 'Email này đã được sử dụng. Vui lòng nhập email khác.'
+
+const normalizeErrorText = (value = '') =>
+  value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+
+const getRegistrationErrorMessage = (error) => {
+  const message = error?.message ?? ''
+  const normalizedMessage = normalizeErrorText(message)
+  const isDuplicateEmailError =
+    normalizedMessage.includes('email') &&
+    (normalizedMessage.includes('ton tai') ||
+      normalizedMessage.includes('su dung') ||
+      normalizedMessage.includes('already') ||
+      normalizedMessage.includes('exists') ||
+      normalizedMessage.includes('duplicate') ||
+      normalizedMessage.includes('conflict'))
+
+  return isDuplicateEmailError ? EMAIL_ALREADY_USED_MESSAGE : message || 'Đăng ký thất bại. Vui lòng thử lại.'
+}
+
 const Register = () => {
   const navigate = useNavigate()
   const { isAuthenticated, isAuthenticating, registerUser, verifyRegistrationOtp } = useAuth()
   const [pendingVerificationEmail, setPendingVerificationEmail] = useState('')
   const [otpCode, setOtpCode] = useState('')
   const [registrationMessage, setRegistrationMessage] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const hasPasswordMismatch = Boolean(confirmPassword) && password !== confirmPassword
 
   if (isAuthenticated) {
     return <Navigate to="/" replace />
@@ -32,11 +58,9 @@ const Register = () => {
     const fullName = formData.get('fullName')?.toString().trim()
     const phone = formData.get('phone')?.toString().trim()
     const email = formData.get('email')?.toString().trim()
-    const password = formData.get('password')?.toString()
-    const confirmPassword = formData.get('confirmPassword')?.toString()
 
     if (password !== confirmPassword) {
-      toast.error('Mật khẩu xác nhận chưa khớp. Vui lòng kiểm tra lại.')
+      toast.error('Mật khẩu xác nhận phải trùng với mật khẩu.')
       return
     }
 
@@ -47,8 +71,10 @@ const Register = () => {
       setRegistrationMessage(`Tài khoản đã được tạo. Mã OTP kích hoạt đã được gửi tới ${email}.`)
       toast.success('Đăng ký thành công. Vui lòng nhập OTP từ email để kích hoạt tài khoản.')
       event.currentTarget.reset()
+      setPassword('')
+      setConfirmPassword('')
     } catch (error) {
-      toast.error(error.message)
+      toast.error(getRegistrationErrorMessage(error))
     }
   }
 
@@ -83,7 +109,7 @@ const Register = () => {
       helperLabel="Đăng nhập ngay"
       onSubmit={handleSubmit}
       isSubmitting={isAuthenticating}
-      submitDisabled={Boolean(pendingVerificationEmail)}
+      submitDisabled={Boolean(pendingVerificationEmail) || hasPasswordMismatch}
     >
       <div className="grid gap-5 sm:grid-cols-2">
         <div className="space-y-2 sm:col-span-2">
@@ -154,6 +180,8 @@ const Register = () => {
               className={`${inputClassName} pl-11`}
               minLength={6}
               autoComplete="new-password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
               required
             />
           </div>
@@ -170,12 +198,18 @@ const Register = () => {
               name="confirmPassword"
               type="password"
               placeholder="Nhập lại mật khẩu"
-              className={`${inputClassName} pl-11`}
+              className={`${inputClassName} pl-11 ${hasPasswordMismatch ? 'border-red-500 focus:border-red-500' : ''}`}
               minLength={6}
               autoComplete="new-password"
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              aria-invalid={hasPasswordMismatch}
               required
             />
           </div>
+          {hasPasswordMismatch ? (
+            <p className="text-xs font-medium text-red-600">Mật khẩu xác nhận phải trùng với mật khẩu.</p>
+          ) : null}
         </div>
       </div>
 
